@@ -422,13 +422,14 @@ function init() {
   [...new Set(D.T.map(t => dia(t.saida).slice(-4)))].sort().forEach(a => $("fAno").insertAdjacentHTML("beforeend", `<option>${a}</option>`));
   [...new Set(D.T.map(t => t.moeda))].sort().forEach(m => $("fMoeda").insertAdjacentHTML("beforeend", `<option>${m}</option>`));
   $("gerado").textContent = TX`Dados até ${dia(D.fim)}; gerado em ${D.gerado}.`;
-  $("dIni").min = iso(D.inicio); $("dIni").max = iso(D.fim); $("dIni").value = iso(D.inicio);
-  aportes = [{t: D.inicio, v: 10000}];
+  const hoje = new Date(), m1 = Math.min(Math.max(D.inicio, Date.UTC(hoje.getFullYear(), hoje.getMonth(), 1) / 1000), D.fim - DIA);   // abre no dia 01 do mês atual (Felipe 30/10/2026)
+  $("dIni").min = iso(D.inicio); $("dIni").max = iso(D.fim); $("dIni").value = iso(m1);
+  aportes = [{t: m1, v: 10000}];
   plano.ini = D.inicio; plano.fim = D.fim; $("recIni").value = iso(D.inicio); $("recFim").value = iso(D.fim);
   ["recIni", "recFim"].forEach(id => { $(id).min = iso(D.inicio); $(id).max = iso(D.fim); });
   const nd = Math.ceil((D.fim - D.inicio) / DIA); $("rA").max = nd; $("rB").max = nd;
   ["pA", "pB"].forEach(id => { $(id).min = iso(D.inicio); $(id).max = iso(D.fim); });
-  gerarAP(); setPer(D.inicio, D.fim); meses();
+  gerarAP(); setPer(m1, D.fim); meses();
   if (root.id === "tab-sim") { let qm = null; try { qm = new URLSearchParams(location.search).get("mes"); } catch (e) {} if (qm && /^\d{4}-\d{2}$/.test(qm)) abrirMes(+qm.slice(0, 4), +qm.slice(5, 7) - 1); }   // ?mes=AAAA-MM abre os Resultados do mês
 }
 
