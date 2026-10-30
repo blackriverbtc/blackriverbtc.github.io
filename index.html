@@ -1,0 +1,806 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><style>:root{padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}body{margin:0;font:14px system-ui}img{max-width:100%}[hidden]{display:none!important}</style></head><body><title>Histórico Black River</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: um painel de leitura, de cima para baixo: números do momento → curva trade a trade com reprodução → ano a ano → lista.
+   Cor: neutros com leve viés azul-ardósia; acento único (azul) na curva; verde/vermelho só como semântica de ganho/perda. */
+:root{color-scheme:light;--bg:#f6f7f9;--card:#ffffff;--line:#dfe3ea;--fg:#141a24;--mut:#5c6675;--acc:#2a78d6;--acc-soft:rgba(42,120,214,.12);--pos:#008300;--neg:#e34948;--pos-soft:rgba(0,131,0,.1);--neg-soft:rgba(227,73,72,.1);--grid:#e8ebf0;--cross:#8a94a6;--ui:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--mono:"IBM Plex Mono",ui-monospace,Menlo,monospace}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0f1319;--card:#171c24;--line:#2a323e;--fg:#e8ecf1;--mut:#9aa5b5;--acc:#3987e5;--acc-soft:rgba(57,135,229,.16);--pos:#2bbd6e;--neg:#ef6b6b;--pos-soft:rgba(43,189,110,.12);--neg-soft:rgba(239,107,107,.12);--grid:#222a35;--cross:#6f7a8c}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#0f1319;--card:#171c24;--line:#2a323e;--fg:#e8ecf1;--mut:#9aa5b5;--acc:#3987e5;--acc-soft:rgba(57,135,229,.16);--pos:#2bbd6e;--neg:#ef6b6b;--pos-soft:rgba(43,189,110,.12);--neg-soft:rgba(239,107,107,.12);--grid:#222a35;--cross:#6f7a8c}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.45 var(--ui)}
+main{max-width:1200px;margin:0 auto;padding-block:20px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1{font-size:22px;font-weight:600;margin:0;letter-spacing:-.01em}
+h2{font-size:15px;font-weight:600;margin:28px 0 10px;text-wrap:balance}
+.sub{color:var(--mut);margin:4px 0 0}
+.mut{color:var(--mut)}.pos{color:var(--pos)}.neg{color:var(--neg)}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+header{display:flex;flex-wrap:wrap;gap:12px 24px;justify-content:space-between;align-items:flex-end}
+.ctl{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+label.f{display:flex;align-items:center;gap:6px;color:var(--mut);font-size:13px}
+input[type=number]{width:120px;font:14px var(--mono);padding:5px 8px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--fg)}
+select{font:13px var(--ui);padding:5px 8px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--fg)}
+.btn{font:13px var(--ui);padding:6px 12px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--fg);cursor:pointer}
+.btn.primary{background:var(--acc);border-color:var(--acc);color:#fff}
+.btn:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.seg button{font:13px var(--ui);padding:5px 10px;border:0;background:var(--card);color:var(--mut);cursor:pointer}
+.seg button.on{background:var(--acc-soft);color:var(--fg)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:18px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px 12px;min-width:0}
+.tile .k{font-size:12px;color:var(--mut)}
+.tile .v{font-size:20px;font-weight:600;margin-top:2px;white-space:nowrap}
+.tile .s{font-size:12px;color:var(--mut);margin-top:2px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 14px;min-width:0}
+.chartwrap{position:relative;margin-top:12px}
+svg text{fill:var(--mut);font-family:var(--mono);font-size:11px}
+#tip,#bTip,#cTip{position:absolute;top:8px;left:8px;display:none;pointer-events:none;background:var(--card);border:1px solid var(--line);border-radius:6px;padding:7px 10px;font-size:12.5px;max-width:300px;box-shadow:0 2px 8px rgba(0,0,0,.12);z-index:2}
+#tip .big{font-size:16px;font-weight:600;color:var(--fg)}
+#pop{position:absolute;display:none;background:var(--card);border:1px solid var(--acc);border-radius:8px;padding:10px 12px;font-size:13px;box-shadow:0 4px 14px rgba(0,0,0,.14);z-index:3;min-width:240px}
+#pop .row{display:flex;gap:8px;align-items:center;margin-top:8px}
+#hit{cursor:crosshair}
+.play{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin-top:10px}
+.prog{flex:1 1 200px;height:6px;background:var(--grid);border-radius:3px;position:relative;cursor:pointer;min-width:120px}
+.prog i{position:absolute;inset:0 auto 0 0;background:var(--acc);border-radius:3px}
+.dual{position:relative;flex:1 1 220px;height:22px;min-width:160px}
+.dual::before{content:"";position:absolute;left:0;right:0;top:9px;height:4px;background:var(--grid);border-radius:2px}
+.dual .fill{position:absolute;top:9px;height:4px;background:var(--acc);border-radius:2px}
+.dual input{position:absolute;left:0;top:0;width:100%;height:22px;margin:0;pointer-events:none;-webkit-appearance:none;appearance:none;background:transparent}
+.dual input::-webkit-slider-thumb{pointer-events:auto;-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--acc);border:2px solid var(--card);box-shadow:0 0 0 1px var(--line);cursor:pointer}
+.dual input::-moz-range-thumb{pointer-events:auto;width:12px;height:12px;border-radius:50%;background:var(--acc);border:2px solid var(--card);cursor:pointer}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;white-space:nowrap;font-size:13px}
+th{text-align:left;color:var(--mut);font-weight:500;padding:6px 8px;border-bottom:1px solid var(--line)}
+td{padding:6px 8px;border-bottom:1px solid var(--grid)}
+th.n,td.n{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+.tag{display:inline-block;padding:1px 6px;border-radius:4px;font-size:11px}
+.lg{background:var(--pos-soft);color:var(--pos)}.sh{background:var(--neg-soft);color:var(--neg)}
+input[type=checkbox]{accent-color:var(--acc);width:15px;height:15px}
+:root{--btc:#d9822b}@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--btc:#e9a05a}}:root[data-theme="dark"]{--btc:#e9a05a}
+.tabs{display:flex;gap:4px;margin-top:16px;border-bottom:1px solid var(--line)}
+.tabs button{font:17px var(--ui);padding:10px 18px;border:0;border-bottom:3px solid transparent;background:none;color:var(--mut);cursor:pointer;margin-bottom:-1px}
+.tabs button.on{color:var(--fg);border-bottom-color:var(--acc);font-weight:500}
+.tile.b{border-top:3px solid var(--btc)}.tile.r{border-top:3px solid var(--acc)}
+#meses th{text-align:center;padding:6px 4px}#meses td{padding:0;text-align:center}#meses td.y{text-align:left;padding:6px 8px;font-weight:500}
+#meses td .c{display:block;padding:7px 4px;font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:12px}#meses td.m{cursor:pointer}#meses td.tot .c{font-weight:600}
+.note{font-size:12.5px;color:var(--mut);line-height:1.5;max-width:70ch}
+.note b{color:var(--fg);font-weight:600}
+.empty{color:var(--mut);padding:14px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* Resultados do mês (clique na tabela mês a mês) */
+.rm-pill{display:inline-block;border-radius:999px;padding:2px 10px;font-size:13px;font-weight:500;border:1px solid var(--line);background:var(--card)}
+.rm-split{display:grid;grid-template-columns:330px minmax(0,1fr);gap:14px}@media (max-width:760px){.rm-split{grid-template-columns:1fr}}
+.rm-lista{max-height:440px;overflow:auto;border:1px solid var(--line);border-radius:8px}.rm-lista table{border-collapse:collapse;width:100%;font-size:12.5px}
+.rm-lista td{padding:5px 7px;border-bottom:1px solid var(--line);cursor:pointer;white-space:nowrap}.rm-lista tr.on td{background:color-mix(in srgb, var(--acc) 12%, transparent)}.rm-lista td.n{text-align:right}
+.rm-hdr{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:baseline;margin-bottom:6px;font-size:13px}.rm-hdr .big{font-size:16px;font-weight:600}
+.rm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px}
+.rm-mini{border:1px solid var(--line);border-radius:8px;padding:6px;background:var(--card);border-top:3px solid var(--line);cursor:pointer}.rm-mini.w{border-top-color:var(--pos)}.rm-mini.l{border-top-color:var(--neg)}
+.rm-mini .t{display:flex;justify-content:space-between;font-size:12px;margin-bottom:2px}
+.rm-c svg text,.rm-a svg text{font:10.5px ui-monospace,SFMono-Regular,Menlo,monospace;fill:var(--mut)}
+</style>
+
+<main>
+<header>
+  <div>
+    <h1>Histórico Black River</h1>
+  </div>
+  <div class="ctl">
+    <div class="seg" id="tema" title="Tema" style="font-size:14px"><button data-t="light" aria-label="claro">☀︎</button><button data-t="dark" aria-label="escuro">☾</button></div>
+    <div class="seg" id="lang" title="Idioma / Language / Idioma" style="font-size:15px"><button data-l="pt" class="on" aria-label="Português">🇧🇷</button><button data-l="en" aria-label="English">🇺🇸</button><button data-l="es" aria-label="Español">🇪🇸</button></div>
+  </div>
+</header>
+<nav class="tabs" role="tablist"><button class="on" data-tab="sim" role="tab" aria-selected="true">Barracuda</button><button data-tab="aro" role="tab" aria-selected="false">Arowana</button><button data-tab="v29" role="tab" aria-selected="false">Barracuda vs Arowana</button><button data-tab="btc" role="tab" aria-selected="false">Barracuda vs BTC</button></nav>
+<div id="tab-sim">
+
+<section class="card" style="margin-top:14px">
+  <div class="ctl">
+    <b style="font-size:15px">Simular com</b>
+    <div class="seg" id="modo" style="font-size:14px"><button data-m="var" class="on">Aportes avulsos</button><button data-m="dca">Aporte recorrente (DCA)</button></div>
+  </div>
+  <div id="modoVar" style="margin-top:10px">
+    <div class="ctl" style="justify-content:space-between">
+      <div class="ctl">
+        <label class="f" for="dIni">Primeiro aporte em <input type="date" id="dIni"></label>
+        <label class="f" for="cap">US$ <input type="number" id="cap" value="10000" min="0" step="1000"></label>
+      </div>
+      <button class="btn" id="addAp">+ Novo aporte</button>
+    </div>
+    <div id="aportes" style="margin-top:8px"></div>
+  </div>
+  <div id="modoDca" hidden style="margin-top:10px">
+    <div class="ctl">
+      <label class="f" for="recV">US$ <input type="number" id="recV" value="1000" min="0" step="100" style="width:100px"></label>
+      <label class="f" for="recF">a cada <select id="recF"><option value="m" selected>mês</option><option value="s">semana</option><option value="q">3 meses</option></select></label>
+      <label class="f" for="recIni">de <input type="date" id="recIni"></label>
+      <label class="f" for="recFim">até <input type="date" id="recFim"></label>
+      <span class="mut" id="recInfo" style="font-size:12.5px"></span>
+    </div>
+  </div>
+</section>
+
+<section class="tiles" id="tiles"></section>
+
+<section class="card chartwrap" style="margin-top:14px">
+  <div style="display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center">
+    <label class="f" for="ciclos">Ciclos do BTC <select id="ciclos"><option value="halving">Halving</option><option value="">nenhum</option></select></label>
+    <div><b>Patrimônio</b> <span class="mut" id="chartNote"></span></div>
+  </div>
+  <div id="chart" style="margin-top:6px"></div>
+  <div id="tip"></div>
+  <div id="pop"><div><b>Aporte em <span id="popData"></span></b><div class="mut" id="popInfo" style="font-size:12px"></div></div>
+    <div class="row"><label class="f" for="popV">US$</label><input type="number" id="popV" value="10000" min="1" step="1000" style="width:120px"><button class="btn primary" id="popOk">Adicionar</button><button class="btn" id="popX">Cancelar</button></div></div>
+  <div class="play" style="margin-top:8px">
+    <label class="f" for="pA">Período</label><input type="date" id="pA">
+    <div class="dual"><div class="fill" id="perFill"></div><input type="range" id="rA" min="0" step="1" aria-label="início do período"><input type="range" id="rB" min="0" step="1" aria-label="fim do período"></div>
+    <input type="date" id="pB"><button class="btn" id="perTudo">tudo</button><span class="mut" id="perTxt" style="font-size:12.5px"></span>
+  </div>
+  <p class="note" style="margin:6px 0 0" id="chartHelp"></p>
+  <div class="play">
+    <button class="btn primary" id="play">▶ Reproduzir trade a trade</button>
+    <div class="seg" id="speed"><button data-v="1">1×</button><button data-v="4" class="on">4×</button><button data-v="16">16×</button><button data-v="64">64×</button></div>
+    <div class="prog" id="prog"><i id="progbar"></i></div>
+    <span class="mut num" id="progtxt"></span>
+  </div>
+</section>
+
+<h2>Mês a mês <span class="mut" style="font-weight:400">· retorno da estratégia: aporte no 1º dia do mês, saída no último dia · clique num mês para analisá-lo</span></h2>
+<div class="card tw" style="padding:0"><table id="meses"></table></div>
+<section id="resMes" hidden>
+<h2 style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span>Resultados</span><span class="rm-pill" id="resTit"></span><button class="btn" id="resX" style="margin-left:auto" aria-label="fechar">✕</button></h2>
+<div class="card rm-split"><div class="rm-lista"><table id="resLista"></table></div><div style="min-width:0"><div class="rm-hdr" id="resHdr"></div><div class="rm-a" id="resA"></div><div style="display:flex;gap:6px;margin-top:8px"><button class="btn" id="resPrev">‹</button><button class="btn" id="resNext">›</button></div></div></div>
+<div class="rm-grid" id="resB" style="margin-top:10px"></div>
+<div class="card chartwrap rm-c" style="margin-top:10px" id="resC"></div>
+</section>
+
+<h2>Ano a ano</h2>
+<div class="card tw"><table id="anos"></table></div>
+
+<h2>Operações <span class="mut" id="opsN" style="font-weight:400"></span></h2>
+<div class="ctl" style="margin-bottom:8px">
+  <label class="f" for="fAno">Ano <select id="fAno"><option value="">todos</option></select></label>
+  <label class="f" for="fMoeda">Moeda <select id="fMoeda"><option value="">todas</option></select></label>
+  <label class="f" for="fConta">Conta <select id="fConta"><option value="">as duas</option><option value="4h">4h</option><option value="12h">12h</option></select></label>
+  <label class="f" for="fLado">Lado <select id="fLado"><option value="">ambos</option><option value="1">compras</option><option value="-1">vendas</option></select></label>
+</div>
+<div class="card tw"><table id="ops"></table></div>
+
+<h2>Como ler estes números</h2>
+<p class="note"><b>Simulação, não resultado real.</b> A curva aplica as regras do robô Barracuda (v28) a preços à vista da Binance de 11/05/2020 em diante, com taxas da Hyperliquid (maker 0,015%, taker 0,045%), derrapagem de 0,02% e funding fixo de 5% ao ano. O patrimônio é marcado a mercado no fechamento de cada candle. As regras foram escolhidas olhando o mesmo período: o desempenho futuro tende a ser menor, e a queda a esperar é de 30–50%, não a histórica. O robô opera dinheiro real desde 27/09/2026; a versão deste painel mostra só o simulado. <span id="gerado"></span></p>
+</div>
+
+<div id="tab-aro" hidden></div>
+<div id="tab-btc" hidden>
+<section class="card" style="margin-top:14px">
+  <div class="ctl">
+    <label class="f" for="bCap">Aporte US$ <input type="number" id="bCap" value="10000" min="1" step="1000"></label>
+    <span class="mut" id="bInfo" style="font-size:12.5px"></span>
+  </div>
+</section>
+<section class="tiles" id="bTiles"></section>
+<section class="card chartwrap">
+  <div style="display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center">
+    <label class="f" for="bCiclos">Ciclos do BTC <select id="bCiclos"><option value="halving">Halving</option><option value="">nenhum</option></select></label>
+    <div><b>Evolução</b> <span class="mut">· <span style="color:var(--acc)">■</span> Barracuda · <span style="color:var(--btc)">■</span> BTC comprado e segurado<span id="bNota"></span></span></div>
+  </div>
+  <div id="bChart" style="margin-top:6px"></div>
+  <div id="bTip"></div>
+  <div class="play" style="margin-top:8px">
+    <label class="f" for="bDe">Período</label><input type="date" id="bDe">
+    <div class="dual"><div class="fill" id="bFill"></div><input type="range" id="bRA" min="0" step="1" aria-label="início do período"><input type="range" id="bRB" min="0" step="1" aria-label="fim do período"></div>
+    <input type="date" id="bAte"><button class="btn" id="bTudo">tudo</button>
+  </div>
+  <p class="note" style="margin:6px 0 0">Arraste as bolinhas (ou escolha as datas) para mudar o período; o aporte entra na data de início.</p>
+</section>
+<p class="note" style="margin-top:10px">O mesmo dinheiro, no mesmo período, sem aportes extras: no Barracuda (simulação v28, custos da Hyperliquid) ou comprando BTC à vista e segurando (sem custos). A curva do robô foi ajustada olhando este mesmo período; a do BTC é preço.</p>
+</div>
+
+<div id="tab-v29" hidden>
+<p class="note" style="margin:12px 0 0"><b>Arowana = Barracuda + breakeven.</b> Quando a operação anda o gatilho a favor (máxima ou mínima do candle), o stop vai para a entrada + 0,3R a partir do candle seguinte. O stop móvel pela onda continua igual. Simulação das duas regras no mesmo período.</p>
+<section class="card" style="margin-top:10px">
+  <div class="ctl">
+    <label class="f" for="cCap">Aporte US$ <input type="number" id="cCap" value="10000" min="1" step="1000"></label>
+    <label class="f" for="cVar">Arowana: gatilho do breakeven <select id="cVar"><option value="0.75">0,75R</option><option value="1.0" selected>1R</option><option value="1.5">1,5R</option></select></label>
+    <span class="mut" id="cInfo" style="font-size:12.5px"></span>
+  </div>
+</section>
+<h2>Comparação no período</h2>
+<div class="card tw"><table id="cTab"></table></div>
+<section class="card chartwrap">
+  <div><b>Evolução</b> <span class="mut">· <span style="color:var(--acc)">■</span> Barracuda · <span style="color:var(--pos)">■</span> Arowana</span></div>
+  <div id="cChart" style="margin-top:6px"></div>
+  <div id="cTip"></div>
+  <div class="play" style="margin-top:8px">
+    <label class="f" for="cDe">Período</label><input type="date" id="cDe">
+    <div class="dual"><div class="fill" id="cFill"></div><input type="range" id="cRA" min="0" step="1" aria-label="início do período"><input type="range" id="cRB" min="0" step="1" aria-label="fim do período"></div>
+    <input type="date" id="cAte"><button class="btn" id="cTudo">tudo</button>
+  </div>
+</section>
+<h2>Ano a ano</h2>
+<div class="card tw"><table id="cAnos"></table></div>
+</div>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const fmtUSD = v => (v < 0 ? "−" : "") + "US$ " + Math.round(Math.abs(v)).toLocaleString(LOC());
+const fmtPct = (v, d = 1) => (v > 0 ? "+" : "") + v.toLocaleString(LOC(), {minimumFractionDigits: d, maximumFractionDigits: d}) + "%";
+const dia = t => new Date(t * 1000).toLocaleDateString(LOC(), {day: "2-digit", month: "2-digit", year: "numeric", timeZone: "UTC"});
+const iso = t => new Date(t * 1000).toISOString().slice(0, 10);
+const deIso = s => Math.floor(Date.UTC(+s.slice(0, 4), +s.slice(5, 7) - 1, +s.slice(8, 10)) / 1000);
+// ---- Aba Robô × BTC: o mesmo aporte nas duas curvas, no mesmo período (independente dos aportes do simulador)
+let BTC = [], bDe = 0, bAte = 0, bScale = "log", bCiclosOn = true;
+$("bCiclos").addEventListener("change", () => { bCiclosOn = $("bCiclos").value === "halving"; renderB(); });
+const at = (S, t) => { let lo = 0, hi = S.length - 1, k = 0; while (lo <= hi) { const m = (lo + hi) >> 1; if (S[m][0] <= t) { k = m; lo = m + 1; } else hi = m - 1; } return S[k][1]; };
+const serie = (S, a, b, cap) => { const base = at(S, a); return S.filter(p => p[0] >= a && p[0] <= b).map(p => [p[0], cap * p[1] / base]); };
+const quedaMax = C => { let pk = 0, d = 0, t = null; C.forEach(([x, v]) => { if (v > pk) pk = v; const q = 1 - v / pk; if (q > d) { d = q; t = x; } }); return {dd: d * 100, t}; };
+let bIni = 0, bFim = 0;
+function bootB() {
+  bIni = Math.max(D.inicio, BTC[0][0]); bFim = Math.min(D.fim, BTC[BTC.length - 1][0]);
+  ["bDe", "bAte"].forEach(id => { $(id).min = iso(bIni); $(id).max = iso(bFim); });
+  const nd = Math.ceil((bFim - bIni) / DIA); $("bRA").max = nd; $("bRB").max = nd;
+  setPerB(bIni, bFim);
+}
+function setPerB(a, b) {
+  a = Math.max(bIni, Math.min(a, bFim - DIA)); b = Math.max(a + DIA, Math.min(b, bFim)); bDe = a; bAte = b;
+  const n = (bFim - bIni) / DIA, pa = (a - bIni) / DIA, pb = (b - bIni) / DIA;
+  $("bRA").value = pa; $("bRB").value = pb; $("bDe").value = iso(a); $("bAte").value = iso(b);
+  $("bFill").style.left = (pa / n * 100) + "%"; $("bFill").style.right = (100 - pb / n * 100) + "%";
+  renderB();
+}
+$("bRA").addEventListener("input", () => setPerB(bIni + $("bRA").value * DIA, bAte));
+$("bRB").addEventListener("input", () => setPerB(bDe, bIni + $("bRB").value * DIA));
+$("bTudo").addEventListener("click", () => setPerB(bIni, bFim));
+function renderB() {
+  const cap = +$("bCap").value || 0, R = serie(D.curva, bDe, bAte, cap), B = serie(BTC, bDe, bAte, cap);
+  if (R.length < 2 || B.length < 2 || !(cap > 0)) { $("bTiles").innerHTML = ""; $("bChart").innerHTML = `<div class="empty">${tx("Escolha um período com pelo menos dois dias e um valor de aporte.")}</div>`; return; }
+  const dias = (bAte - bDe) / DIA, anos = dias / 365.25;
+  const card = (cls, nome, C) => { const fin = C[C.length - 1][1], r = fin / cap - 1, q = quedaMax(C), cagr = anos >= 0.5 ? (Math.pow(fin / cap, 1 / anos) - 1) * 100 : null;
+    return `<div class="tile ${cls}"><div class="k">${nome} · ${tx("no fim")}</div><div class="v num">${fmtUSD(fin)}</div><div class="s">${fmtPct(r * 100, 0)} ${tx("no período")}${cagr !== null ? ` · ${fmtPct(cagr, 0)} ${tx("ao ano")}` : ""}</div></div>` +
+           `<div class="tile ${cls}"><div class="k">${nome} · ${tx("queda máxima")}</div><div class="v num neg">${fmtPct(-q.dd)}</div><div class="s">${q.t ? TX`fundo em ${dia(q.t)}` : ""}</div></div>`; };
+  const fR = R[R.length - 1][1], fB = B[B.length - 1][1];
+  $("bTiles").innerHTML = card("r", "Barracuda", R) + card("b", "BTC", B) +
+    `<div class="tile"><div class="k">${tx("Diferença no fim")}</div><div class="v num ${fR >= fB ? "pos" : "neg"}">${(fR >= fB ? "+" : "") + fmtUSD(fR - fB)}</div><div class="s">${tx("robô")} ${tx(fR >= fB ? "acima" : "abaixo")} ${tx("do BTC")} · ${(fR / fB).toLocaleString(LOC(), {maximumFractionDigits: 2})}×</div></div>`;
+  $("bInfo").textContent = `${dia(bDe)} → ${dia(bAte)} · ${Math.round(dias)} ${tx("dias")}`;
+  chartB(R, B);
+}
+function chartB(R, B) {
+  const W = 1100, H = 340, L = 74, Rt = 16, T = 10, Bt = 26, x0 = bDe, x1 = bAte;
+  const all = [...R.map(p => p[1]), ...B.map(p => p[1])], lo = Math.min(...all), hi = Math.max(...all);
+  const Y = bScale === "log" ? v => T + (Math.log(hi * 1.05) - Math.log(v)) / (Math.log(hi * 1.05) - Math.log(lo * 0.95)) * (H - T - Bt) : v => T + (hi * 1.05 - v) / (hi * 1.05 - lo * 0.95 + 1e-9) * (H - T - Bt);
+  const X = t => L + (t - x0) / (x1 - x0 || 1) * (W - L - Rt);
+  let ticks = [];
+  if (bScale === "log") { for (let p = Math.pow(10, Math.floor(Math.log10(lo * 0.95))); p <= hi * 1.05; p *= 10) for (const m of [1, 2, 5]) { const v = p * m; if (v >= lo * 0.95 && v <= hi * 1.05) ticks.push(v); } }
+  else { const base = Math.pow(10, Math.floor(Math.log10(hi / 5))), step = base * [1, 2, 5, 10].find(s => hi / (base * s) <= 6); for (let v = step; v <= hi * 1.05; v += step) if (v >= lo * 0.95) ticks.push(v); }
+  ticks = [...new Set(ticks)].slice(0, 12);
+  let g = ticks.map(v => `<line x1="${L}" x2="${W - Rt}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" stroke="var(--grid)"/><text x="${L - 6}" y="${(Y(v) + 3).toFixed(1)}" text-anchor="end">${v >= 1e6 ? (v / 1e6).toFixed(v >= 1e7 ? 0 : 1) + tx(" mi") : v >= 1e3 ? Math.round(v / 1e3) + tx(" mil") : Math.round(v)}</text>`).join("");
+  const nm = (x1 - x0) / (30.44 * DIA), passo = nm <= 14 ? 1 : nm <= 40 ? 3 : 12;
+  const dm = new Date(x0 * 1000); dm.setUTCDate(1); dm.setUTCHours(0, 0, 0, 0); dm.setUTCMonth(dm.getUTCMonth() + 1);
+  for (; dm.getTime() / 1000 < x1; dm.setUTCMonth(dm.getUTCMonth() + 1)) { const mo = dm.getUTCMonth(), t = dm.getTime() / 1000; if (mo % passo || t <= x0) continue;
+    g += `<line x1="${X(t).toFixed(1)}" x2="${X(t).toFixed(1)}" y1="${T}" y2="${H - Bt}" stroke="var(--grid)"/><text x="${X(t).toFixed(1)}" y="${H - 8}" text-anchor="middle">${mo === 0 ? dm.getUTCFullYear() : MES[mo]}</text>`; }
+  if (bCiclosOn && D.ciclos) {
+    D.ciclos.halving.forEach(c => { const a = Math.max(c.ini, x0), b = Math.min(c.fim, x1); if (b <= a) return; const bull = c.tipo === "bull", w = X(b) - X(a);
+      g = `<rect x="${X(a).toFixed(1)}" y="${T}" width="${w.toFixed(1)}" height="${H - T - Bt}" fill="var(${bull ? "--pos" : "--neg"})" fill-opacity=".07"/>` + g;
+      if (c.ini > x0) g += `<line x1="${X(c.ini).toFixed(1)}" x2="${X(c.ini).toFixed(1)}" y1="${T}" y2="${H - Bt}" stroke="var(${bull ? "--pos" : "--neg"})" stroke-dasharray="2 3" stroke-opacity=".7"/>`;
+      g += `<rect x="${X(a).toFixed(1)}" y="${T}" width="${w.toFixed(1)}" height="16" fill="transparent"><title>${bull ? "BULL" : "BEAR"} BTC ${c.var > 0 ? "+" : ""}${c.var}% (${dia(c.ini)} → ${dia(c.fim)})</title></rect>`;
+      if (w > 70) g += `<text x="${(X(a) + 5).toFixed(1)}" y="${T + 12}" style="fill:var(${bull ? "--pos" : "--neg"});font-weight:500">${bull ? "BULL" : "BEAR"} <tspan style="fill:var(--mut)">BTC ${c.var > 0 ? "+" : ""}${c.var}%</tspan></text>`;
+      else if (w > 26) g += `<text x="${(X(a) + 3).toFixed(1)}" y="${T + 12}" style="fill:var(${bull ? "--pos" : "--neg"});font-weight:500;font-size:9px">${bull ? "BULL" : "BEAR"}</text>`; });
+  }
+  $("bNota").textContent = bCiclosOn ? tx(" · faixas = ciclos do halving do BTC") : "";
+  const path = (C, cor) => `<path d="${C.map((p, i) => (i ? "L" : "M") + X(p[0]).toFixed(1) + "," + Y(p[1]).toFixed(1)).join("")}" fill="none" stroke="${cor}" stroke-width="2" stroke-linejoin="round"/>`;
+  g += path(B, "var(--btc)") + path(R, "var(--acc)");
+  g += `<line id="bcx" x1="0" x2="0" y1="${T}" y2="${H - Bt}" stroke="var(--cross)" visibility="hidden"/><rect x="${L}" y="${T}" width="${W - L - Rt}" height="${H - T - Bt}" fill="transparent"/>`;
+  $("bChart").innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Robô e BTC no período">${g}</svg>`;
+  const svg = $("bChart").querySelector("svg"), tip = $("bTip"), cx = $("bcx");
+  svg.addEventListener("mousemove", e => {
+    const r = svg.getBoundingClientRect(), sx = W / r.width, px = (e.clientX - r.left) * sx, t = x0 + (px - L) / (W - L - Rt) * (x1 - x0);
+    const vr = at(R, t), vb = at(B, t);
+    cx.setAttribute("x1", px.toFixed(1)); cx.setAttribute("x2", px.toFixed(1)); cx.setAttribute("visibility", "visible");
+    tip.innerHTML = `<div class="mut">${dia(t)}</div><div class="num"><span style="color:var(--acc)">■</span> ${tx("robô")} ${fmtUSD(vr)} <span class="mut">(${fmtPct((vr / R[0][1] - 1) * 100, 0)})</span></div><div class="num"><span style="color:var(--btc)">■</span> BTC ${fmtUSD(vb)} <span class="mut">(${fmtPct((vb / B[0][1] - 1) * 100, 0)})</span></div>`;
+    tip.style.display = "block"; const left = px / sx + 14; tip.style.left = (left + tip.offsetWidth > r.width ? px / sx - tip.offsetWidth - 14 : left) + "px"; tip.style.top = "8px";
+  });
+  svg.addEventListener("mouseleave", () => { tip.style.display = "none"; cx.setAttribute("visibility", "hidden"); });
+}
+// ---- Aba V28 × V29: mesma banca, mesmo período; V29 = breakeven (dash_v29.json, variantes por gatilho)
+let V29 = null, cDe = 0, cAte = 0, cScale = "log", cIni = 0, cFim = 0;
+function v29() { const v = V29.variantes[$("cVar").value]; if (!v.T) v.T = v.trades.map(t => Object.fromEntries(V29.colunas.map((c, i) => [c, t[i]]))); return v; }
+function statsC(curva, trades, a, b, cap) {
+  const C = serie(curva, a, b, cap); const T = trades.filter(t => t.saida >= a && t.saida <= b);
+  const R = T.map(t => t.R), W = R.filter(r => r > 0); let seq = 0, best = 0; R.forEach(r => { seq = r <= 0 ? seq + 1 : 0; best = Math.max(best, seq); });
+  const fim = C.length ? C[C.length - 1][1] : cap, q = quedaMax(C), dias = Math.max(1, (b - a) / DIA);
+  const meses = {}; C.forEach(([t, v]) => { const k = new Date(t * 1000).toISOString().slice(0, 7); meses[k] = meses[k] || [v, v]; meses[k][1] = v; });
+  let prev = cap, neg = 0, nm = 0; Object.keys(meses).sort().forEach(k => { nm++; if (meses[k][1] < prev) neg++; prev = meses[k][1]; });
+  return {fim, ret: (fim / cap - 1) * 100, dia: (Math.pow(fim / cap, 1 / dias) - 1) * 100, dd: q.dd, ddT: q.t, n: T.length, acerto: T.length ? W.length / T.length * 100 : 0,
+          r: T.length ? R.reduce((x, y) => x + y, 0) / T.length : 0, ganho: W.length ? W.reduce((x, y) => x + y, 0) / W.length : 0, seq: best, neg, nm, C};
+}
+function bootC() {
+  cIni = D.inicio; cFim = D.fim; ["cDe", "cAte"].forEach(id => { $(id).min = iso(cIni); $(id).max = iso(cFim); });
+  const nd = Math.ceil((cFim - cIni) / DIA); $("cRA").max = nd; $("cRB").max = nd; setPerC(cIni, cFim);
+}
+function setPerC(a, b) {
+  a = Math.max(cIni, Math.min(a, cFim - DIA)); b = Math.max(a + DIA, Math.min(b, cFim)); cDe = a; cAte = b;
+  const n = (cFim - cIni) / DIA, pa = (a - cIni) / DIA, pb = (b - cIni) / DIA;
+  $("cRA").value = pa; $("cRB").value = pb; $("cDe").value = iso(a); $("cAte").value = iso(b);
+  $("cFill").style.left = (pa / n * 100) + "%"; $("cFill").style.right = (100 - pb / n * 100) + "%"; renderC();
+}
+function renderC() {
+  const cap = +$("cCap").value || 0; if (!(cap > 0)) { $("cTab").innerHTML = ""; $("cChart").innerHTML = `<div class="empty">${tx("Informe um aporte.")}</div>`; return; }
+  const v = v29(), A = statsC(D.curva, D.T, cDe, cAte, cap), B = statsC(v.curva, v.T, cDe, cAte, cap);
+  $("cInfo").textContent = TX`${dia(cDe)} → ${dia(cAte)} · Arowana com gatilho ${v.gatilho}R → stop em +${v.stop_para}R`;
+  const d = (x, y, f, inv) => { const z = y - x; return `<td class="n ${(inv ? -z : z) >= 0 ? "pos" : "neg"}">${f(z, true)}</td>`; };
+  const fU = (x, s) => (s && x > 0 ? "+" : "") + fmtUSD(x), fP = (x, s) => fmtPct(x, 0), fN = (x, s) => (s && x > 0 ? "+" : "") + Math.round(x).toLocaleString(LOC()), fR = (x, s) => (x > 0 ? "+" : "") + x.toFixed(2) + "R", fP1 = (x, s) => fmtPct(x, 1), pts = (z, d = 0) => (z > 0 ? "+" : "") + z.toLocaleString(LOC(), {minimumFractionDigits: d, maximumFractionDigits: d}) + tx(" pts"), pc = (x, d = 1) => x.toLocaleString(LOC(), {minimumFractionDigits: d, maximumFractionDigits: d}) + "%";
+  const rows = [[tx("Patrimônio no fim"), fU(A.fim), fU(B.fim), d(A.fim, B.fim, fU)], [tx("Retorno no período"), fP(A.ret), fP(B.ret), d(A.ret, B.ret, (z) => pts(z))],
+    [tx("Retorno ao dia"), pc(A.dia, 3), pc(B.dia, 3), d(A.dia, B.dia, (z) => pts(z, 3))],
+    [tx("Queda máxima"), pc(A.dd), pc(B.dd), d(A.dd, B.dd, (z) => pts(-z, 1), true)],
+    [tx("Operações"), fN(A.n), fN(B.n), d(A.n, B.n, fN)], [tx("Acerto"), pc(A.acerto), pc(B.acerto), d(A.acerto, B.acerto, (z) => pts(z, 1))],
+    [tx("R médio"), fR(A.r), fR(B.r), d(A.r, B.r, fR)], [tx("Ganho médio (R)"), fR(A.ganho), fR(B.ganho), d(A.ganho, B.ganho, fR)],
+    [tx("Maior sequência de perdas"), fN(A.seq), fN(B.seq), d(A.seq, B.seq, fN, true)], [tx("Meses negativos"), TX`${A.neg} de ${A.nm}`, TX`${B.neg} de ${B.nm}`, d(A.neg, B.neg, fN, true)]];
+  $("cTab").innerHTML = `<tr><th></th><th class="n">Barracuda (v28)</th><th class="n">Arowana (v29)</th><th class="n">Arowana − Barracuda</th></tr>` + rows.map(r => `<tr><td>${r[0]}</td><td class="n">${r[1]}</td><td class="n">${r[2]}</td>${r[3]}</tr>`).join("");
+  chartC(A.C, B.C); anosC(v, cap);
+}
+function anosC(v, cap) {
+  const anos = [...new Set(D.cT.map(t => new Date(t * 1000).getUTCFullYear()))]; let h = `<tr><th>${tx("Ano")}</th><th class="n">Barracuda</th><th class="n">Arowana</th><th class="n">${tx("Diferença")}</th><th class="n">${tx("Queda")} V28</th><th class="n">${tx("Queda")} V29</th><th class="n">${tx("Acerto")} V28</th><th class="n">${tx("Acerto")} V29</th><th class="n">Ops V28</th><th class="n">Ops V29</th></tr>`;
+  anos.forEach(y => { const a = Math.max(D.inicio, Date.UTC(y, 0, 1) / 1000), b = Math.min(D.fim, Date.UTC(y + 1, 0, 1) / 1000 - DIA); if (b <= a) return;
+    const A = statsC(D.curva, D.T, a, b, cap), B = statsC(v.curva, v.T, a, b, cap);
+    h += `<tr><td>${y}</td><td class="n ${A.ret >= 0 ? "pos" : "neg"}">${fmtPct(A.ret, 0)}</td><td class="n ${B.ret >= 0 ? "pos" : "neg"}">${fmtPct(B.ret, 0)}</td><td class="n ${B.ret >= A.ret ? "pos" : "neg"}">${(B.ret - A.ret > 0 ? "+" : "") + Math.round(B.ret - A.ret).toLocaleString(LOC())}${tx(" pts")}</td><td class="n">${A.dd.toFixed(1).replace(".", ",")}%</td><td class="n">${B.dd.toFixed(1).replace(".", ",")}%</td><td class="n">${A.acerto.toFixed(0)}%</td><td class="n">${B.acerto.toFixed(0)}%</td><td class="n">${A.n}</td><td class="n">${B.n}</td></tr>`; });
+  $("cAnos").innerHTML = h;
+}
+function chartC(A, B) {
+  const W = 1100, H = 340, L = 74, Rt = 16, T = 10, Bt = 26, x0 = cDe, x1 = cAte;
+  const all = [...A.map(p => p[1]), ...B.map(p => p[1])], lo = Math.min(...all), hi = Math.max(...all);
+  const Y = cScale === "log" ? v => T + (Math.log(hi * 1.05) - Math.log(v)) / (Math.log(hi * 1.05) - Math.log(lo * 0.95)) * (H - T - Bt) : v => T + (hi * 1.05 - v) / (hi * 1.05 - lo * 0.95 + 1e-9) * (H - T - Bt);
+  const X = t => L + (t - x0) / (x1 - x0 || 1) * (W - L - Rt);
+  let ticks = [];
+  if (cScale === "log") { for (let p = Math.pow(10, Math.floor(Math.log10(lo * 0.95))); p <= hi * 1.05; p *= 10) for (const m of [1, 2, 5]) { const v = p * m; if (v >= lo * 0.95 && v <= hi * 1.05) ticks.push(v); } }
+  else { const base = Math.pow(10, Math.floor(Math.log10(hi / 5))), step = base * [1, 2, 5, 10].find(s => hi / (base * s) <= 6); for (let v = step; v <= hi * 1.05; v += step) if (v >= lo * 0.95) ticks.push(v); }
+  ticks = [...new Set(ticks)].slice(0, 12);
+  let g = ticks.map(v => `<line x1="${L}" x2="${W - Rt}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" stroke="var(--grid)"/><text x="${L - 6}" y="${(Y(v) + 3).toFixed(1)}" text-anchor="end">${v >= 1e6 ? (v / 1e6).toFixed(v >= 1e7 ? 0 : 1) + tx(" mi") : v >= 1e3 ? Math.round(v / 1e3) + tx(" mil") : Math.round(v)}</text>`).join("");
+  const nm = (x1 - x0) / (30.44 * DIA), passo = nm <= 14 ? 1 : nm <= 40 ? 3 : 12;
+  const dm = new Date(x0 * 1000); dm.setUTCDate(1); dm.setUTCHours(0, 0, 0, 0); dm.setUTCMonth(dm.getUTCMonth() + 1);
+  for (; dm.getTime() / 1000 < x1; dm.setUTCMonth(dm.getUTCMonth() + 1)) { const mo = dm.getUTCMonth(), t = dm.getTime() / 1000; if (mo % passo || t <= x0) continue;
+    g += `<line x1="${X(t).toFixed(1)}" x2="${X(t).toFixed(1)}" y1="${T}" y2="${H - Bt}" stroke="var(--grid)"/><text x="${X(t).toFixed(1)}" y="${H - 8}" text-anchor="middle">${mo === 0 ? dm.getUTCFullYear() : MES[mo]}</text>`; }
+  const path = (C, cor) => `<path d="${C.map((p, i) => (i ? "L" : "M") + X(p[0]).toFixed(1) + "," + Y(p[1]).toFixed(1)).join("")}" fill="none" stroke="${cor}" stroke-width="2" stroke-linejoin="round"/>`;
+  g += path(A, "var(--acc)") + path(B, "var(--pos)");
+  g += `<line id="ccx" x1="0" x2="0" y1="${T}" y2="${H - Bt}" stroke="var(--cross)" visibility="hidden"/><rect x="${L}" y="${T}" width="${W - L - Rt}" height="${H - T - Bt}" fill="transparent"/>`;
+  $("cChart").innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Barracuda e Arowana no período">${g}</svg>`;
+  const svg = $("cChart").querySelector("svg"), tip = $("cTip"), cx = $("ccx");
+  svg.addEventListener("mousemove", e => {
+    const r = svg.getBoundingClientRect(), sx = W / r.width, px = (e.clientX - r.left) * sx, t = x0 + (px - L) / (W - L - Rt) * (x1 - x0);
+    const va = at(A, t), vb = at(B, t);
+    cx.setAttribute("x1", px.toFixed(1)); cx.setAttribute("x2", px.toFixed(1)); cx.setAttribute("visibility", "visible");
+    tip.innerHTML = `<div class="mut">${dia(t)}</div><div class="num"><span style="color:var(--acc)">■</span> Barracuda ${fmtUSD(va)}</div><div class="num"><span style="color:var(--pos)">■</span> Arowana ${fmtUSD(vb)} <span class="mut">(${fmtPct((vb / va - 1) * 100, 0)})</span></div>`;
+    tip.style.display = "block"; const left = px / sx + 14; tip.style.left = (left + tip.offsetWidth > r.width ? px / sx - tip.offsetWidth - 14 : left) + "px"; tip.style.top = "8px";
+  });
+  svg.addEventListener("mouseleave", () => { tip.style.display = "none"; cx.setAttribute("visibility", "hidden"); });
+}
+$("cRA").addEventListener("input", () => setPerC(cIni + $("cRA").value * DIA, cAte));
+$("cRB").addEventListener("input", () => setPerC(cDe, cIni + $("cRB").value * DIA));
+$("cTudo").addEventListener("click", () => setPerC(cIni, cFim));
+$("cDe").addEventListener("change", () => { const t = deIso($("cDe").value); if (t) setPerC(t, cAte); });
+$("cAte").addEventListener("change", () => { const t = deIso($("cAte").value); if (t) setPerC(cDe, t); });
+$("cCap").addEventListener("input", renderC); $("cVar").addEventListener("change", renderC);
+$("bDe").addEventListener("change", () => { const t = deIso($("bDe").value); if (t) setPerB(t, bAte); });
+$("bAte").addEventListener("change", () => { const t = deIso($("bAte").value); if (t) setPerB(bDe, t); });
+$("bCap").addEventListener("input", renderB);
+
+// ---- Aba Barracuda / Arowana: o mesmo simulador, um por aba (root = div da aba; ids repetidos, busca escopada)
+function Historico(root, dados) {
+  const $ = id => root.querySelector("#" + id) || document.getElementById(id);
+let D = dados, scale = "log", idx = null, timer = null, speed = 4, showCiclos = "halving", listaSuja = false;
+let aportes = [];           // aportes manuais [{t, v}]; o primeiro é o inicial
+let plano = {on: false, v: 1000, freq: "m", ini: null, fim: null}; let modo = "var";   // "var" = aportes avulsos · "dca" = só o plano recorrente
+let AP = [];                // aportes efetivos (manuais + recorrentes), ordenados
+let per = {a: null, b: null};   // período em análise (null = tudo)
+function t0() { return Math.max(inicio(), per.a || 0); }
+function tF() { return per.b || D.fim; }
+function setPer(a, b, light) {
+  a = Math.max(D.inicio, Math.min(a, D.fim - DIA)); b = Math.max(a + DIA, Math.min(b, D.fim));
+  per = (a <= D.inicio && b >= D.fim) ? {a: null, b: null} : {a, b};
+  const n = (D.fim - D.inicio) / DIA, pa = (a - D.inicio) / DIA, pb = (b - D.inicio) / DIA;
+  $("rA").value = pa; $("rB").value = pb; $("pA").value = iso(a); $("pB").value = iso(b);
+  $("perFill").style.left = (pa / n * 100) + "%"; $("perFill").style.right = (100 - pb / n * 100) + "%";
+  $("perTxt").textContent = per.a ? `${dia(a)} → ${dia(b)}` : tx("todo o histórico");
+  if (timer) stop(); idx = null; render(light);
+}
+function gerarAP() {
+  const out = modo === "dca" ? [] : aportes.map(a => ({...a, rec: false}));
+  if (modo === "dca" && plano.v >= 0 && plano.ini) {
+    const fim = plano.fim || D.fim; let d = new Date(plano.ini * 1000); let n = 0;
+    while (d.getTime() / 1000 <= fim && n < 2000) {
+      out.push({t: Math.floor(d.getTime() / 1000), v: plano.v, rec: true}); n++;
+      if (plano.freq === "s") d.setUTCDate(d.getUTCDate() + 7); else if (plano.freq === "q") d.setUTCMonth(d.getUTCMonth() + 3); else d.setUTCMonth(d.getUTCMonth() + 1);
+    }
+  }
+  AP = out.filter(a => a.t >= D.inicio && a.t <= D.fim).sort((a, b) => a.t - b.t);
+  const rec = AP.filter(a => a.rec);
+  $("recInfo").textContent = modo === "dca" ? (rec.length ? TX`${rec.length} aportes = ${fmtUSD(rec.reduce((s_, a) => s_ + a.v, 0))}` : tx("nenhum aporte no intervalo")) : "";
+}
+
+function init() {
+  D.T = D.trades.map(t => Object.fromEntries(D.colunas.map((c, i) => [c, t[i]])));
+  D.cT = D.curva.map(p => p[0]); D.cV = D.curva.map(p => p[1]);
+  [...new Set(D.T.map(t => dia(t.saida).slice(-4)))].sort().forEach(a => $("fAno").insertAdjacentHTML("beforeend", `<option>${a}</option>`));
+  [...new Set(D.T.map(t => t.moeda))].sort().forEach(m => $("fMoeda").insertAdjacentHTML("beforeend", `<option>${m}</option>`));
+  $("gerado").textContent = TX`Dados até ${dia(D.fim)}; gerado em ${D.gerado}.`;
+  $("dIni").min = iso(D.inicio); $("dIni").max = iso(D.fim); $("dIni").value = iso(D.inicio);
+  aportes = [{t: D.inicio, v: 10000}];
+  plano.ini = D.inicio; plano.fim = D.fim; $("recIni").value = iso(D.inicio); $("recFim").value = iso(D.fim);
+  ["recIni", "recFim"].forEach(id => { $(id).min = iso(D.inicio); $(id).max = iso(D.fim); });
+  const nd = Math.ceil((D.fim - D.inicio) / DIA); $("rA").max = nd; $("rB").max = nd;
+  ["pA", "pB"].forEach(id => { $(id).min = iso(D.inicio); $(id).max = iso(D.fim); });
+  gerarAP(); setPer(D.inicio, D.fim); meses();
+  if (root.id === "tab-sim") { let qm = null; try { qm = new URLSearchParams(location.search).get("mes"); } catch (e) {} if (qm && /^\d{4}-\d{2}$/.test(qm)) abrirMes(+qm.slice(0, 4), +qm.slice(5, 7) - 1); }   // ?mes=AAAA-MM abre os Resultados do mês
+}
+
+// ---- Mês a mês (só a estratégia): retorno do mês = cota no último dia / cota no dia anterior ao 1º dia (ou no 1º dia, no primeiro mês)
+function retMes(y, m) {
+  const a = Date.UTC(y, m, 1) / 1000, b = Date.UTC(y, m + 1, 1) / 1000 - DIA;
+  if (a > D.fim || b < D.inicio) return null;
+  const ini = a - DIA >= D.inicio ? P(a - DIA) : D.cV[0]; return P(Math.min(b, D.fim)) / ini - 1;
+}
+function meses() {
+  const anos = [...new Set(D.cT.map(t => new Date(t * 1000).getUTCFullYear()))];
+  const cor = r => { if (r === null) return ""; const k = Math.min(1, Math.abs(r) / 0.3); return `background:color-mix(in srgb, var(--${r >= 0 ? "pos" : "neg"}) ${Math.round(k * 55)}%, transparent)`; };
+  let h = `<tr><th style="text-align:left">${tx("Ano")}</th>${MES.map(m => `<th>${m}</th>`).join("")}<th>${tx("Ano")}</th></tr>`;
+  anos.forEach(y => { let ac = 1, cells = "";
+    for (let m = 0; m < 12; m++) { const r = retMes(y, m); if (r === null) { cells += `<td><span class="c mut">·</span></td>`; continue; } ac *= 1 + r;
+      cells += `<td class="m" data-y="${y}" data-m="${m}" style="${cor(r)}" title="${MES[m]}/${y}: ${fmtPct(r * 100)}"><span class="c">${fmtPct(r * 100, 0)}</span></td>`; }
+    h += `<tr><td class="y">${y}</td>${cells}<td class="tot" style="${cor(ac - 1)}"><span class="c">${fmtPct((ac - 1) * 100, 0)}</span></td></tr>`; });
+  $("meses").innerHTML = h;
+}
+$("meses").addEventListener("click", e => { const td = e.target.closest("td.m"); if (!td) return; const y = +td.dataset.y, m = +td.dataset.m;
+  setPer(Math.max(D.inicio, Date.UTC(y, m, 1) / 1000), Math.min(D.fim, Date.UTC(y, m + 1, 1) / 1000 - DIA)); abrirMes(y, m); });
+
+// preço "da cota": patrimônio simulado (base 10 mil) no último fechamento diário até t
+function P(t) { let lo = 0, hi = D.cT.length - 1, k = 0; while (lo <= hi) { const m = (lo + hi) >> 1; if (D.cT[m] <= t) { k = m; lo = m + 1; } else hi = m - 1; } return D.cV[k]; }
+function inicio() { return AP.length ? AP[0].t : (modo === "dca" ? plano.ini : aportes[0].t); }
+function investido(t) { return AP.filter(a => a.t <= t).reduce((s, a) => s + a.v, 0); }
+function bal(valor, t) { return AP.filter(a => a.t <= t).reduce((s, a) => s + a.v * valor / P(a.t), 0); }   // saldo do investidor quando a cota vale `valor`
+function visiveis() { const a = t0(), b = tF(); return D.T.filter(t => t.saida >= a && t.saida <= b); }
+function curvaVis(n, V) { const ini = t0(), tmax = n >= V.length ? tF() : (n ? V[n - 1].saida : ini); const i0 = D.cT.findIndex(t => t >= ini); return D.curva.slice(Math.max(0, i0 - 1)).filter(p => p[0] <= tmax).map(p => [Math.max(p[0], ini), p[1]]); }
+
+function metricas(n, V) {
+  const T = V.slice(0, n), C = curvaVis(n, V), ini = t0();
+  const fimP = n >= V.length, tfim = fimP ? tF() : (n ? T[n - 1].saida : ini);
+  const cota = n && !fimP ? T[n - 1].banca_apos : (C.length ? C[C.length - 1][1] : P(tfim));   // no fim do período: marcado a mercado (igual ao gráfico); durante a reprodução: saldo após a operação
+  const eq = bal(cota, tfim), eq0 = bal(P(ini), ini);           // patrimônio no fim e no início do período
+  const inv = investido(tfim), invP = inv - investido(ini);     // aportes feitos dentro do período
+  let pico = 0, dd = 0, ddT = null; C.forEach(([t, v]) => { if (v > pico) pico = v; const d = 1 - v / pico; if (d > dd) { dd = d; ddT = t; } });
+  const R = T.map(t => t.R), W = R.filter(r => r > 0), L = R.filter(r => r <= 0);
+  const dias = Math.max(1, (tfim - ini) / DIA);
+  const twr = cota / P(ini);
+  const g = (Math.pow(twr, 1 / dias) - 1) * 100;
+  return {eq, eq0, inv, invP, base: eq0 + invP, lucro: eq - eq0 - invP, twr: (twr - 1) * 100, dd: dd * 100, ddT, n, acerto: n ? W.length / n * 100 : 0, r: n ? R.reduce((a, b) => a + b, 0) / n : 0,
+          ganho: W.length ? W.reduce((a, b) => a + b, 0) / W.length : 0, perda: L.length ? L.reduce((a, b) => a + b, 0) / L.length : 0,
+          pf: L.length ? W.reduce((a, b) => a + b, 0) / Math.abs(L.reduce((a, b) => a + b, 0)) : 0, antes: T.filter(t => t.entrada < ini).length, dia: g, mes: (Math.pow(1 + g / 100, 30.44) - 1) * 100, dias};
+}
+
+function renderAportes() {
+  $("aportes").innerHTML = aportes.length > 1 ? `<table><tr><th>${tx("Aporte")}</th><th>${tx("Data")}</th><th class="n">${tx("Valor")}</th><th></th></tr>` + aportes.slice(1).map((a, i) =>
+    `<tr><td class="mut">${i + 2}${tx("º")}</td><td><input type="date" data-i="${i + 1}" class="apD" value="${iso(a.t)}" min="${iso(D.inicio)}" max="${iso(D.fim)}"></td><td class="n"><input type="number" data-i="${i + 1}" class="apV" value="${a.v}" min="1" step="1000" style="width:110px"></td><td><button class="btn" data-del="${i + 1}">${tx("remover")}</button></td></tr>`).join("") + "</table>" : `<span class="mut" style="font-size:12.5px">${tx('Sem aportes adicionais. Use "+ Novo aporte" para simular entradas de dinheiro em outras datas.')}</span>`;
+}
+
+function render(light) {
+  const V = visiveis(); if (idx === null || idx > V.length) idx = V.length;
+  const m = metricas(idx, V);
+  $("tiles").innerHTML = [
+    [tx("Patrimônio"), fmtUSD(m.eq), TX`em ${dia(idx >= V.length ? tF() : idx ? V[idx - 1].saida : t0())}`],
+    t0() > inicio() ? [tx("Patrimônio no início do período"), fmtUSD(m.eq0), TX`em ${dia(t0())}` + (m.invP ? TX` · + ${fmtUSD(m.invP)} aportados no período` : tx(" · sem aportes no período"))]
+                    : [tx("Total aportado"), fmtUSD(m.inv), TX`${AP.filter(a => a.t <= (idx ? V[idx - 1].saida : inicio())).length} aporte(s) desde ${dia(inicio())}`],
+    [tx(t0() > inicio() ? "Lucro no período" : "Lucro"), `<span class="${m.lucro >= 0 ? "pos" : "neg"}">${(m.lucro >= 0 ? "+" : "") + fmtUSD(m.lucro)}</span>`, m.base > 0 ? TX`${fmtPct(m.lucro / m.base * 100, 0)} sobre ${tx(t0() > inicio() ? "o patrimônio inicial + aportes" : "o aportado")}` : tx("sem aporte")],
+    [tx("Retorno da estratégia no período"), `<span class="${m.twr >= 0 ? "pos" : "neg"}">${fmtPct(m.twr, 0)}</span>`, TX`${m.dia.toFixed(3)}%/dia · ${m.mes.toFixed(1)}%/mês`],
+    [tx("Queda máxima da estratégia"), `<span class="neg">${fmtPct(-m.dd)}</span>`, m.ddT ? TX`fundo em ${dia(m.ddT)}` : ""],
+    [tx("Operações"), m.n.toLocaleString(LOC()), TX`acerto ${m.acerto.toFixed(1)}% · R médio ${(m.r >= 0 ? "+" : "") + m.r.toFixed(3)} · PF ${m.pf.toFixed(2)}` + (m.antes ? `<br><span class="neg">${TX`${m.antes} aberta(s) antes do período: o R e o PF contam o resultado inteiro delas, a curva só a parte dentro do período`}</span>` : "")],
+  ].map(([k, v, s]) => `<div class="tile"><div class="k">${k}</div><div class="v num">${v}</div><div class="s">${s}</div></div>`).join("");
+  chart(V); anos(V);
+  if (light) listaSuja = true; else { lista(V); listaSuja = false; }
+  $("progbar").style.width = (V.length ? idx / V.length * 100 : 0) + "%";
+  $("progtxt").textContent = `${idx.toLocaleString(LOC())} / ${V.length.toLocaleString(LOC())}`;
+}
+
+function chart(V) {
+  const C = curvaVis(idx, V), W = 1100, H = 360, L = 74, R = 16, T = 10, B = 26;
+  if (C.length < 2) { $("chart").innerHTML = `<div class="empty">${tx("Escolha uma data inicial anterior ao fim dos dados.")}</div>`; return; }
+  const xs = C.map(p => p[0]), ys = C.map(p => bal(p[1], p[0])), inv = C.map(p => investido(p[0]));
+  const x0 = t0(), x1 = tF();
+  const lo = Math.min(...ys, ...inv), hi = Math.max(...ys, ...inv);
+  if (!(hi > 0)) { $("chart").innerHTML = `<div class="empty">${tx("Sem aporte: informe um valor para ver a curva.")}</div>`; $("chartNote").textContent = ""; return; }
+  const Y = scale === "log" ? v => T + (Math.log(hi * 1.05) - Math.log(Math.max(v, lo * 0.5))) / (Math.log(hi * 1.05) - Math.log(lo * 0.95)) * (H - T - B)
+                            : v => T + (hi * 1.05 - v) / (hi * 1.05 - lo * 0.95 + 1e-9) * (H - T - B);
+  const X = t => L + (t - x0) / (x1 - x0 || 1) * (W - L - R);
+  let ticks = [];
+  if (scale === "log") { for (let p = Math.pow(10, Math.floor(Math.log10(lo * 0.95))); p <= hi * 1.05; p *= 10) for (const m of [1, 2, 5]) { const v = p * m; if (v >= lo * 0.95 && v <= hi * 1.05) ticks.push(v); } }
+  else { const base = Math.pow(10, Math.floor(Math.log10(hi / 5))), step = base * [1, 2, 5, 10].find(s => hi / (base * s) <= 6); for (let v = step; v <= hi * 1.05; v += step) if (v >= lo * 0.95) ticks.push(v); }
+  ticks = [...new Set(ticks)].slice(0, 12);
+  let g = ticks.map(v => `<line x1="${L}" x2="${W - R}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" stroke="var(--grid)"/><text x="${L - 6}" y="${(Y(v) + 3).toFixed(1)}" text-anchor="end">${v >= 1e6 ? (v / 1e6).toFixed(v >= 1e7 ? 0 : 1) + tx(" mi") : v >= 1e3 ? Math.round(v / 1e3) + tx(" mil") : Math.round(v)}</text>`).join("");
+  const meses = (x1 - x0) / (30.44 * DIA), passo = meses <= 14 ? 1 : meses <= 40 ? 3 : 12;   // rótulos do eixo: mês, trimestre ou ano
+  const dm = new Date(x0 * 1000); dm.setUTCDate(1); dm.setUTCHours(0, 0, 0, 0); dm.setUTCMonth(dm.getUTCMonth() + 1);
+  for (; dm.getTime() / 1000 < x1; dm.setUTCMonth(dm.getUTCMonth() + 1)) { const mo = dm.getUTCMonth(), t = dm.getTime() / 1000; if (mo % passo || t <= x0) continue;
+    const lab = mo === 0 ? dm.getUTCFullYear() : dm.toLocaleDateString(LOC(), {month: "short", timeZone: "UTC"}).replace(".", "");
+    g += `<line x1="${X(t).toFixed(1)}" x2="${X(t).toFixed(1)}" y1="${T}" y2="${H - B}" stroke="var(--grid)"/><text x="${X(t).toFixed(1)}" y="${H - 8}" text-anchor="middle">${lab}</text>`; }
+  if (showCiclos && D.ciclos) {
+    const tmaxC = xs[xs.length - 1];
+    D.ciclos.halving.forEach(c => { const a = Math.max(c.ini, x0), b = Math.min(c.fim, tmaxC); if (b <= a) return; const bull = c.tipo === "bull";
+      g = `<rect x="${X(a).toFixed(1)}" y="${T}" width="${(X(b) - X(a)).toFixed(1)}" height="${H - T - B}" fill="var(${bull ? "--pos" : "--neg"})" fill-opacity=".07"/>` + g;
+      if (c.ini > x0) g += `<line x1="${X(c.ini).toFixed(1)}" x2="${X(c.ini).toFixed(1)}" y1="${T}" y2="${H - B}" stroke="var(${bull ? "--pos" : "--neg"})" stroke-dasharray="2 3" stroke-opacity=".7"/>`;
+      const w = X(b) - X(a), rot = `${bull ? "BULL" : "BEAR"} BTC ${c.var > 0 ? "+" : ""}${c.var}% (${dia(c.ini)} → ${dia(c.fim)})`;
+      g += `<rect x="${X(a).toFixed(1)}" y="${T}" width="${w.toFixed(1)}" height="16" fill="transparent"><title>${rot}</title></rect>`;
+      if (w > 70) g += `<text x="${(X(a) + 5).toFixed(1)}" y="${T + 12}" style="fill:var(${bull ? "--pos" : "--neg"});font-weight:500">${bull ? "BULL" : "BEAR"} <tspan style="fill:var(--mut)">BTC ${c.var > 0 ? "+" : ""}${c.var}%</tspan></text>`;
+      else if (w > 26) g += `<text x="${(X(a) + 3).toFixed(1)}" y="${T + 12}" style="fill:var(${bull ? "--pos" : "--neg"});font-weight:500;font-size:9px">${bull ? "BULL" : "BEAR"}</text>`; });
+  }
+  // linha do total aportado (degraus) e marcadores dos aportes
+  const pInv = xs.map((t, i) => (i ? "L" : "M") + X(t).toFixed(1) + "," + Y(inv[i]).toFixed(1)).join("");
+  g += `<path d="${pInv}" fill="none" stroke="var(--cross)" stroke-width="1.5" stroke-dasharray="3 4"/>`;
+  const pts = xs.map((t, i) => [X(t), Y(ys[i])]);
+  const path = pts.map((p, i) => (i ? "L" : "M") + p[0].toFixed(1) + "," + p[1].toFixed(1)).join("");
+  const last = pts[pts.length - 1];
+  g += `<path d="${path}L${last[0].toFixed(1)},${H - B}L${pts[0][0].toFixed(1)},${H - B}Z" fill="var(--acc)" fill-opacity=".10"/>`;
+  g += `<path d="${path}" fill="none" stroke="var(--acc)" stroke-width="2" stroke-linejoin="round"/>`;
+  AP.forEach((a, i) => { if (a.t > xs[xs.length - 1]) return; const k = xs.findIndex(t => t >= a.t); if (k < 0) return;
+    if (a.rec) { g += `<line x1="${X(a.t).toFixed(1)}" x2="${X(a.t).toFixed(1)}" y1="${H - B - 8}" y2="${H - B}" stroke="var(--acc)" stroke-opacity=".55"/>`; return; }
+    g += `<line x1="${X(a.t).toFixed(1)}" x2="${X(a.t).toFixed(1)}" y1="${(pts[k][1] + 6).toFixed(1)}" y2="${H - B}" stroke="var(--acc)" stroke-opacity=".5"/><text x="${X(a.t).toFixed(1)}" y="${Math.min(H - B - 6, pts[k][1] + 24).toFixed(1)}" text-anchor="middle" style="fill:var(--acc)">▲ ${tx(i ? "aporte" : "início")} ${fmtUSD(a.v).replace("US$ ", "")}</text>`; });
+  g += `<circle cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="4" fill="var(--acc)" stroke="var(--card)" stroke-width="2"/>`;
+  g += `<text x="${Math.min(last[0] + 8, W - 100).toFixed(1)}" y="${(last[1] - 8).toFixed(1)}" style="fill:var(--fg);font-weight:500">${fmtUSD(ys[ys.length - 1])}</text>`;
+  g += `<line id="cx" x1="0" x2="0" y1="${T}" y2="${H - B}" stroke="var(--cross)" visibility="hidden"/><circle id="cp" r="4" fill="var(--acc)" stroke="var(--card)" stroke-width="2" visibility="hidden"/>`;
+  g += `<rect id="hit" x="${L}" y="${T}" width="${W - L - R}" height="${H - T - B}" fill="transparent"/>`;
+  $("chart").innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Patrimônio simulado ao longo do tempo">${g}</svg>`;
+  $("chartHelp").innerHTML = tx(modo === "var" ? "Arraste as bolinhas (ou escolha as datas) para analisar só um período. Passe o mouse para ver o patrimônio em cada data; <b>clique no gráfico</b> para fazer um aporte naquele momento." : "Arraste as bolinhas (ou escolha as datas) para analisar só um período. Passe o mouse para ver o patrimônio em cada data.");
+  $("chartNote").textContent = tx("· azul = seu patrimônio · tracejado = total aportado · traços na base = aportes recorrentes") + (showCiclos && D.ciclos ? tx(" · faixas = ciclos do halving do BTC") : "");
+  const svg = $("chart").querySelector("svg"), tip = $("tip"), cx = $("cx"), cp = $("cp");
+  svg.addEventListener("mousemove", e => {
+    const r = svg.getBoundingClientRect(), sx = W / r.width, px = (e.clientX - r.left) * sx;
+    const t = x0 + (px - L) / (W - L - R) * (x1 - x0);
+    let i = xs.findIndex(v => v >= t); if (i < 0) i = xs.length - 1; if (i < 0) return;
+    const [qx, qy] = pts[i]; cx.setAttribute("x1", qx); cx.setAttribute("x2", qx); cx.setAttribute("visibility", "visible"); cp.setAttribute("cx", qx); cp.setAttribute("cy", qy); cp.setAttribute("visibility", "visible");
+    let pico = 0; for (let j = 0; j <= i; j++) pico = Math.max(pico, C[j][1]);
+    const nT = V.filter(tr => tr.saida <= xs[i]).length;
+    tip.innerHTML = `<div class="mut">${dia(xs[i])}</div><div class="big num">${fmtUSD(ys[i])}</div><div class="num">${tx("aportado")} ${fmtUSD(inv[i])} · ${tx("lucro")} <span class="${ys[i] >= inv[i] ? "pos" : "neg"}">${inv[i] > 0 ? fmtPct((ys[i] / inv[i] - 1) * 100, 0) : "—"}</span></div><div class="num mut">${tx("estratégia abaixo do pico")} ${fmtPct(-(1 - C[i][1] / pico) * 100)} · ${nT.toLocaleString(LOC())} ${tx("operações até aqui")}</div>${modo === "var" ? `<div class="mut" style="margin-top:4px">${tx("clique para aportar nesta data")}</div>` : ""}`;
+    tip.style.display = "block"; const left = qx / sx + 14; tip.style.left = (left + tip.offsetWidth > r.width ? qx / sx - tip.offsetWidth - 14 : left) + "px";
+    tip.style.top = Math.max(4, Math.min(r.height - tip.offsetHeight - 4, qy / sx - tip.offsetHeight - 12)) + "px";
+    svg.dataset.t = xs[i]; svg.dataset.px = qx / sx; svg.dataset.py = qy / sx; svg.dataset.v = ys[i];
+  });
+  svg.addEventListener("mouseleave", () => { tip.style.display = "none"; cx.setAttribute("visibility", "hidden"); cp.setAttribute("visibility", "hidden"); });
+  svg.addEventListener("click", e => {
+    if (modo !== "var" || !e.target.closest("#hit") || !svg.dataset.t) return;
+    const t = +svg.dataset.t, pop = $("pop"), r = svg.getBoundingClientRect();
+    pop.dataset.t = t; $("popData").textContent = dia(t); $("popInfo").textContent = TX`patrimônio nessa data: ${fmtUSD(+svg.dataset.v)}`;
+    pop.style.display = "block"; tip.style.display = "none";
+    const left = +svg.dataset.px + 12, top = +svg.dataset.py + 12;
+    pop.style.left = (left + pop.offsetWidth > r.width ? Math.max(0, +svg.dataset.px - pop.offsetWidth - 12) : left) + "px";
+    pop.style.top = Math.min(r.height - pop.offsetHeight, top) + "px";
+    $("popV").focus(); $("popV").select();
+  });
+}
+
+function anos(V) {
+  const T = V.slice(0, idx), C = curvaVis(idx, V); const rows = []; let prevP = P(t0());
+  for (let y = 2020; y <= 2026; y++) {
+    const cy = C.filter(p => new Date(p[0] * 1000).getUTCFullYear() === y); if (!cy.length) continue;
+    let pico = prevP, dd = 0; cy.forEach(([, v]) => { if (v > pico) pico = v; dd = Math.max(dd, 1 - v / pico); });
+    const fimP = cy[cy.length - 1][1], tf = cy[cy.length - 1][0], ty = T.filter(t => new Date(t.entrada * 1000).getUTCFullYear() === y), w = ty.filter(t => t.R > 0).length;
+    rows.push([y, fimP / prevP - 1, dd, ty.length, ty.length ? w / ty.length : 0, bal(fimP, tf), investido(tf)]); prevP = fimP;
+  }
+  $("anos").innerHTML = `<tr><th>${tx("Ano")}</th><th class="n">${tx("Retorno da estratégia")}</th><th class="n">${tx("Queda máx. no ano")}</th><th class="n">${tx("Operações")}</th><th class="n">${tx("Acerto")}</th><th class="n">${tx("Aportado até o fim do ano")}</th><th class="n">${tx("Seu patrimônio no fim")}</th></tr>` +
+    rows.map(([y, r, dd, n, a, eq, inv]) => `<tr><td>${y}</td><td class="n ${r >= 0 ? "pos" : "neg"}">${fmtPct(r * 100, 0)}</td><td class="n">${fmtPct(-dd * 100)}</td><td class="n">${n}</td><td class="n">${(a * 100).toFixed(0)}%</td><td class="n">${fmtUSD(inv)}</td><td class="n">${fmtUSD(eq)}</td></tr>`).join("");
+}
+
+function lista(V) {
+  const a = $("fAno").value, m = $("fMoeda").value, c = $("fConta").value, l = $("fLado").value;
+  const T = V.slice(0, idx).filter(t => (!a || dia(t.saida).endsWith(a)) && (!m || t.moeda === m) && (!c || t.conta === c) && (!l || String(t.lado) === l));
+  $("opsN").textContent = TX`· ${T.length.toLocaleString(LOC())} operações de ${dia(t0())} a ${dia(tF())}, da primeira à última`;
+  $("ops").innerHTML = `<tr><th>#</th><th>${tx("Entrada")}</th><th>${tx("Saída")}</th><th>${tx("Moeda")}</th><th>${tx("Conta")}</th><th>${tx("Lado")}</th><th class="n">${tx("Preço entrada")}</th><th class="n">${tx("Preço saída")}</th><th>${tx("Motivo")}</th><th class="n">R</th><th class="n">${tx("Resultado")}</th><th class="n">${tx("Seu patrimônio após")}</th></tr>` +
+    (T.map(t => { const i = V.indexOf(t) + 1, antes = bal(t.banca_apos / (1 + t.pct / 100), t.saida), usd = antes * t.pct / 100;
+      return `<tr><td class="mut num">${i}</td><td class="num">${dia(t.entrada)}</td><td class="num">${dia(t.saida)}</td><td>${t.moeda}</td><td class="mut">${t.conta}</td><td><span class="tag ${t.lado > 0 ? "lg" : "sh"}">${tx(t.lado > 0 ? "compra" : "venda")}</span></td><td class="n">${t.preco_entrada.toLocaleString(LOC(), {maximumSignificantDigits: 6})}</td><td class="n">${t.preco_saida.toLocaleString(LOC(), {maximumSignificantDigits: 6})}</td><td class="mut">${tx(t.motivo)}</td><td class="n ${t.R > 0 ? "pos" : "neg"}">${(t.R > 0 ? "+" : "") + t.R.toFixed(2)}</td><td class="n ${usd >= 0 ? "pos" : "neg"}">${(usd >= 0 ? "+" : "") + fmtUSD(usd)}</td><td class="n">${fmtUSD(bal(t.banca_apos, t.saida))}</td></tr>`; }).join("")
+     || `<tr><td colspan="12" class="empty">${tx("Nenhuma operação com esses filtros.")}</td></tr>`);
+}
+
+let ult = 0;
+function tick() { const V = visiveis(); idx = Math.min(V.length, idx + speed); render(true); if (Date.now() - ult > 1000) { lista(V); listaSuja = false; ult = Date.now(); } if (idx >= V.length) stop(); }
+function stop() { clearInterval(timer); timer = null; if (listaSuja) { lista(visiveis()); listaSuja = false; } $("play").textContent = idx >= visiveis().length ? tx("↻ Reproduzir de novo") : tx("▶ Continuar"); }
+$("play").addEventListener("click", () => { if (timer) { stop(); return; } if (idx >= visiveis().length) idx = 0; $("play").textContent = tx("❚❚ Pausar"); timer = setInterval(tick, 60); });
+$("speed").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; speed = +b.dataset.v; [...$("speed").children].forEach(x => x.classList.toggle("on", x === b)); });
+$("prog").addEventListener("click", e => { const r = $("prog").getBoundingClientRect(); idx = Math.round((e.clientX - r.left) / r.width * visiveis().length); render(); if (!timer) $("play").textContent = idx >= visiveis().length ? tx("↻ Reproduzir de novo") : tx("▶ Continuar"); });
+$("ciclos").addEventListener("change", () => { showCiclos = $("ciclos").value; chart(visiveis()); });
+$("rA").addEventListener("input", () => setPer(D.inicio + $("rA").value * DIA, per.b || D.fim, true));
+$("rB").addEventListener("input", () => setPer(per.a || D.inicio, D.inicio + $("rB").value * DIA, true));
+["rA", "rB"].forEach(id => $(id).addEventListener("change", () => { if (listaSuja) { lista(visiveis()); listaSuja = false; } }));
+$("pA").addEventListener("change", () => { const t = deIso($("pA").value); if (t) setPer(t, per.b || D.fim); });
+$("pB").addEventListener("change", () => { const t = deIso($("pB").value); if (t) setPer(per.a || D.inicio, t); });
+$("perTudo").addEventListener("click", () => setPer(D.inicio, D.fim));
+function aplicarAportes() { aportes.sort((a, b) => a.t - b.t); gerarAP(); idx = null; renderAportes(); render(); }
+$("modo").addEventListener("click", e => { const b = e.target.closest("button"); if (!b || b.dataset.m === modo) return; modo = b.dataset.m;
+  [...$("modo").children].forEach(x => x.classList.toggle("on", x === b)); $("modoVar").hidden = modo !== "var"; $("modoDca").hidden = modo !== "dca"; $("pop").style.display = "none";
+  gerarAP(); renderAportes(); setPer(inicio(), Math.max(inicio() + DIA, tF())); });
+$("recV").addEventListener("input", () => { const v = +$("recV").value; if (v >= 0 && $("recV").value !== "") { plano.v = v; aplicarAportes(); } });
+$("recF").addEventListener("change", () => { plano.freq = $("recF").value; aplicarAportes(); });
+$("recIni").addEventListener("change", () => { const t = deIso($("recIni").value); if (t >= D.inicio && t <= D.fim) { plano.ini = t; if (plano.fim < t) { plano.fim = t; $("recFim").value = iso(t); } gerarAP(); setPer(t, Math.max(t + DIA, per.b || D.fim)); } });
+$("recFim").addEventListener("change", () => { const t = deIso($("recFim").value); if (t >= D.inicio && t <= D.fim) { plano.fim = t; aplicarAportes(); } });
+$("cap").addEventListener("input", () => { const v = +$("cap").value; if (v >= 0 && $("cap").value !== "") { aportes[0].v = v; aplicarAportes(); } });
+$("dIni").addEventListener("change", () => { const t = deIso($("dIni").value); if (t >= D.inicio && t <= D.fim) {
+  aportes[0].t = t; aportes = aportes.filter((a, i) => !i || a.t >= t);
+  aportes.sort((x, y) => x.t - y.t); gerarAP(); renderAportes();
+  setPer(t, Math.max(t + DIA, per.b || D.fim));                                // período em análise passa a começar no primeiro aporte
+} });
+$("addAp").addEventListener("click", () => { const ultT = aportes[aportes.length - 1].t; const t = Math.min(D.fim, Math.max(inicio(), ultT + 365 * 86400)); aportes.push({t, v: 10000}); aplicarAportes(); });
+$("aportes").addEventListener("change", e => { const i = +e.target.dataset.i; if (!i) return; if (e.target.classList.contains("apD")) { const t = deIso(e.target.value); if (t >= inicio() && t <= D.fim) aportes[i].t = t; } else { const v = +e.target.value; if (v > 0) aportes[i].v = v; } aplicarAportes(); });
+$("popX").addEventListener("click", () => { $("pop").style.display = "none"; });
+$("popOk").addEventListener("click", () => { const v = +$("popV").value, t = +$("pop").dataset.t; if (v > 0 && t >= inicio() && t <= D.fim) { aportes.push({t, v}); $("pop").style.display = "none"; aplicarAportes(); } });
+$("popV").addEventListener("keydown", e => { if (e.key === "Enter") $("popOk").click(); if (e.key === "Escape") $("popX").click(); });
+$("aportes").addEventListener("click", e => { const b = e.target.closest("button[data-del]"); if (!b) return; aportes.splice(+b.dataset.del, 1); aplicarAportes(); });
+["fAno", "fMoeda", "fConta", "fLado"].forEach(id => $(id).addEventListener("change", () => lista(visiveis())));
+
+// ---- Resultados do mês (clique na tabela mês a mês): linha do tempo + lista/gráfico + mosaico, candles de meses/AAAA-MM.json
+const MESJ = {}; let rm = null; const SEC = {"4h": 14400, "12h": 43200};
+const rmLado = o => tx(o.lado > 0 ? "compra" : "venda"), rmR = o => (o.R > 0 ? "+" : "") + o.R.toFixed(2) + "R", rmP = o => fmtPct(o.pct, 2);
+const dh = t => new Date(t * 1000).toLocaleString(LOC(), {day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", timeZone: "UTC"});
+async function abrirMes(y, m) {
+  const k = `${y}-${String(m + 1).padStart(2, "0")}`, a = Date.UTC(y, m, 1) / 1000, b = Date.UTC(y, m + 1, 1) / 1000 - 1;
+  const ops = D.T.filter(t => t.saida >= a && t.saida <= b).sort((x, z) => x.saida - z.saida), r = retMes(y, m);
+  $("resTit").innerHTML = `${MES[m]}/${y} · <span class="${r >= 0 ? "pos" : "neg"}">${fmtPct(r * 100)}</span> · ${ops.length} ${tx("operações")}`;
+  $("resMes").hidden = false; $("resMes").scrollIntoView({behavior: "smooth", block: "start"});
+  ["resC", "resA", "resB"].forEach(id => { $(id).innerHTML = `<div class="empty">${tx("Carregando…")}</div>`; }); $("resLista").innerHTML = ""; $("resHdr").innerHTML = "";
+  if (!MESJ[k]) { try { MESJ[k] = await (await fetch(`meses/${k}.json`, {cache: "no-store"})).json(); } catch (e) { MESJ[k] = {candles: {}}; } }
+  rm = {ops, i: 0, cs: MESJ[k].candles || {}, a, b, y, m}; renderRM();
+}
+function rmCandles(o, antes, depois) { const cs = rm.cs[`${o.moeda}|${o.conta}`] || [], s = SEC[o.conta]; return cs.filter(c => c[0] >= o.entrada - antes * s && c[0] <= o.saida + depois * s); }
+function candleSVG(o, W, H, mini) {
+  const C = rmCandles(o, mini ? 12 : 30, mini ? 4 : 8); if (C.length < 2) return `<div class="empty">${tx("Sem candles para este mês.")}</div>`;
+  const L = mini ? 3 : 8, R = mini ? 3 : 8, T = mini ? 5 : 8, B = mini ? 3 : 8, stop = o.stop ?? o.preco_entrada;
+  const lo = Math.min(...C.map(c => c[3]), stop), hi = Math.max(...C.map(c => c[2]), stop), pad = (hi - lo) * 0.06 || 1;
+  const Y = v => T + (hi + pad - v) / (hi - lo + 2 * pad) * (H - T - B), n = C.length, bw = (W - L - R) / n, X = i => L + i * bw + bw / 2, sec = SEC[o.conta];
+  let iE = C.findIndex(c => c[0] + sec > o.entrada), iS = C.findIndex(c => c[0] + sec > o.saida); if (iE < 0) iE = 0; if (iS < 0) iS = n - 1;
+  let g = `<rect x="${(X(iE) - bw / 2).toFixed(1)}" y="${T}" width="${(X(iS) - X(iE) + bw).toFixed(1)}" height="${H - T - B}" fill="var(--acc)" fill-opacity=".08"/>`;
+  if (!mini) for (let k = 1; k < 4; k++) { const y = T + k * (H - T - B) / 4; g += `<line x1="${L}" x2="${W - R}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}" stroke="var(--grid)"/>`; }
+  C.forEach((c, i) => { const up = c[4] >= c[1], col = up ? "var(--pos)" : "var(--neg)", y1 = Y(Math.max(c[1], c[4])), y2 = Y(Math.min(c[1], c[4]));
+    g += `<g><title>${dh(c[0])} UTC · O ${c[1]} H ${c[2]} L ${c[3]} C ${c[4]}</title><line x1="${X(i).toFixed(1)}" x2="${X(i).toFixed(1)}" y1="${Y(c[2]).toFixed(1)}" y2="${Y(c[3]).toFixed(1)}" stroke="var(--mut)" stroke-width="1"/><rect x="${(X(i) - bw * 0.35).toFixed(1)}" y="${y1.toFixed(1)}" width="${Math.max(0.8, bw * 0.7).toFixed(1)}" height="${Math.max(1, y2 - y1).toFixed(1)}" fill="${col}"/></g>`; });
+  g += `<line x1="${X(iE).toFixed(1)}" x2="${X(iS).toFixed(1)}" y1="${Y(stop).toFixed(1)}" y2="${Y(stop).toFixed(1)}" stroke="var(--neg)" stroke-dasharray="4 3" stroke-width="1.3"/>`;
+  g += `<line x1="${X(iE).toFixed(1)}" x2="${X(iS).toFixed(1)}" y1="${Y(o.preco_entrada).toFixed(1)}" y2="${Y(o.preco_entrada).toFixed(1)}" stroke="var(--acc)" stroke-dasharray="2 3" stroke-opacity=".7"/>`;
+  const ye = Y(o.preco_entrada), xe = X(iE), r = mini ? 4 : 7, d = o.lado > 0 ? 1 : -1;
+  g += `<path d="M${(xe - r).toFixed(1)},${(ye + d * (r + 3)).toFixed(1)} L${(xe + r).toFixed(1)},${(ye + d * (r + 3)).toFixed(1)} L${xe.toFixed(1)},${(ye + d * 3).toFixed(1)} Z" fill="var(--acc)"><title>${rmLado(o)} ${o.preco_entrada} · ${dh(o.entrada)} UTC</title></path>`;
+  g += `<circle cx="${X(iS).toFixed(1)}" cy="${Y(o.preco_saida).toFixed(1)}" r="${mini ? 3.5 : 5.5}" fill="${o.R > 0 ? "var(--pos)" : "var(--neg)"}" stroke="var(--card)" stroke-width="1.5"><title>${tx("saída")} ${o.preco_saida} · ${dh(o.saida)} UTC · ${rmR(o)}</title></circle>`;
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${o.moeda} ${o.conta}">${g}</svg>`;
+}
+function renderRM() {
+  if (!rm) return; const ops = rm.ops, o = ops[rm.i];
+  // linha do tempo do mês: BTC 4h + uma pista por moeda
+  const W = 1100, Hb = 130, L = 56, Rt = 10, lane = 20, coins = [...new Set(ops.map(p => p.moeda))], x0 = rm.a, x1 = rm.b, X = t => L + (t - x0) / (x1 - x0) * (W - L - Rt);
+  const Bc = (rm.cs["BTC|4h"] || []).filter(c => c[0] >= x0 && c[0] <= x1);
+  let g = "";
+  if (Bc.length > 1) { const lo = Math.min(...Bc.map(c => c[3])), hi = Math.max(...Bc.map(c => c[2])), Y = v => 6 + (hi - v) / (hi - lo) * (Hb - 26), bw = (W - L - Rt) / Bc.length;
+    g += `<text x="${L}" y="12" style="fill:var(--fg)">BTC 4h</text>`;
+    Bc.forEach(c => { const x = X(c[0]) + bw / 2, up = c[4] >= c[1]; g += `<g><title>${dh(c[0])} UTC · ${c[4]}</title><line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${Y(c[2]).toFixed(1)}" y2="${Y(c[3]).toFixed(1)}" stroke="var(--mut)"/><rect x="${(x - bw * 0.35).toFixed(1)}" y="${Y(Math.max(c[1], c[4])).toFixed(1)}" width="${Math.max(0.8, bw * 0.7).toFixed(1)}" height="${Math.max(1, Y(Math.min(c[1], c[4])) - Y(Math.max(c[1], c[4]))).toFixed(1)}" fill="${up ? "var(--pos)" : "var(--neg)"}"/></g>`; }); }
+  const dias = Math.round((x1 - x0) / DIA);
+  for (let d = 1; d <= dias; d += 5) { const t = x0 + (d - 1) * DIA; g += `<line x1="${X(t).toFixed(1)}" x2="${X(t).toFixed(1)}" y1="4" y2="${Hb + coins.length * lane}" stroke="var(--grid)"/><text x="${X(t).toFixed(1)}" y="${Hb - 8}" text-anchor="middle">${String(d).padStart(2, "0")}</text>`; }
+  coins.forEach((c, k) => { const y = Hb + k * lane; g += `<text x="${L - 6}" y="${y + 13}" text-anchor="end" style="fill:var(--fg)">${c}</text><line x1="${L}" x2="${W - Rt}" y1="${y + lane}" y2="${y + lane}" stroke="var(--grid)"/>`;
+    ops.forEach((p, i) => { if (p.moeda !== c) return; const a = Math.max(x0, p.entrada), b = Math.min(x1, p.saida), w = Math.max(3, X(b) - X(a));
+      g += `<rect data-i="${i}" x="${X(a).toFixed(1)}" y="${y + 3}" width="${w.toFixed(1)}" height="${lane - 6}" rx="3" fill="${p.R > 0 ? "var(--pos)" : "var(--neg)"}" fill-opacity="${i === rm.i ? 1 : .7}" stroke="${i === rm.i ? "var(--fg)" : "none"}" style="cursor:pointer"><title>${p.moeda} ${p.conta} ${rmLado(p)} · ${dh(p.entrada)} → ${dh(p.saida)} UTC · ${rmR(p)} · ${rmP(p)}</title></rect>`; }); });
+  $("resC").innerHTML = `<svg viewBox="0 0 ${W} ${Hb + coins.length * lane + 6}" width="100%" role="img">${g}</svg>`;
+  // lista + gráfico
+  $("resLista").innerHTML = ops.map((p, i) => `<tr data-i="${i}" class="${i === rm.i ? "on" : ""}"><td><b>${p.moeda}</b> <span class="mut">${p.conta}</span></td><td><span class="tag ${p.lado > 0 ? "lg" : "sh"}">${rmLado(p)}</span></td><td class="num mut">${dia(p.saida).slice(0, 5)}</td><td class="n num ${p.R > 0 ? "pos" : "neg"}">${rmR(p)}</td><td class="n num ${p.pct >= 0 ? "pos" : "neg"}">${rmP(p)}</td></tr>`).join("");
+  if (!o) { $("resHdr").innerHTML = ""; $("resA").innerHTML = ""; $("resB").innerHTML = ""; return; }
+  $("resHdr").innerHTML = `<span class="big">${o.moeda} <span class="mut" style="font-weight:400">${o.conta} · ${rmLado(o)}</span></span><span class="num mut">${dh(o.entrada)} → ${dh(o.saida)} UTC</span><span class="num ${o.R > 0 ? "pos" : "neg"}" style="font-weight:600">${rmR(o)} · ${rmP(o)}</span><span class="mut">${tx(o.motivo)}</span><span class="mut num">${rm.i + 1}/${ops.length}</span>`;
+  $("resA").innerHTML = candleSVG(o, 820, 340, false);
+  const on = $("resLista").querySelector("tr.on"); if (on) on.scrollIntoView({block: "nearest"});
+  $("resB").innerHTML = ops.map((p, i) => `<div class="rm-mini ${p.R > 0 ? "w" : "l"}" data-i="${i}" role="button" tabindex="0"><div class="t"><span><b>${p.moeda}</b> <span class="mut">${p.conta}</span></span><span class="num ${p.R > 0 ? "pos" : "neg"}">${rmR(p)}</span></div>${candleSVG(p, 170, 80, true)}</div>`).join("");
+}
+function rmSel(i) { rm.i = i; renderRM(); }
+$("resC").addEventListener("click", e => { const r = e.target.closest("rect[data-i]"); if (r) { rmSel(+r.dataset.i); $("resA").scrollIntoView({behavior: "smooth", block: "center"}); } });
+$("resLista").addEventListener("click", e => { const tr = e.target.closest("tr[data-i]"); if (tr) rmSel(+tr.dataset.i); });
+$("resB").addEventListener("click", e => { const m = e.target.closest(".rm-mini"); if (m) { rmSel(+m.dataset.i); $("resA").scrollIntoView({behavior: "smooth", block: "center"}); } });
+$("resPrev").addEventListener("click", () => rmSel((rm.i + rm.ops.length - 1) % rm.ops.length));
+$("resNext").addEventListener("click", () => rmSel((rm.i + 1) % rm.ops.length));
+$("resX").addEventListener("click", () => { $("resMes").hidden = true; });
+  function rerender() { gerarAP(); renderAportes(); render(); meses(); if (rm && !$("resMes").hidden) abrirMes(rm.y, rm.m); if (D.fim) $("gerado").textContent = TX`Dados até ${dia(D.fim)}; gerado em ${D.gerado}.`; }
+  return {init, rerender};
+}
+const MESES = {pt: ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"], en: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"], es: ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"]};
+let MES = null;
+// ---- idiomas: pt (fonte), en, es · chave = texto em português · ?lang=en ou bandeira no topo (fica guardado no navegador)
+const LANGS = {pt: "pt-BR", en: "en-US", es: "es-ES"};
+let LANG = "pt"; try { LANG = new URLSearchParams(location.search).get("lang") || localStorage.getItem("lang") || "pt"; } catch (e) {} if (!LANGS[LANG]) LANG = "pt";
+const LOC = () => LANGS[LANG];
+const NOTA_BAR = "A curva aplica as regras do robô Barracuda (v28) a preços à vista da Binance de 11/05/2020 em diante, com taxas da Hyperliquid (maker 0,015%, taker 0,045%), derrapagem de 0,02% e funding fixo de 5% ao ano. O patrimônio é marcado a mercado no fechamento de cada candle. As regras foram escolhidas olhando o mesmo período: o desempenho futuro tende a ser menor, e a queda a esperar é de 30–50%, não a histórica. O robô opera dinheiro real desde 27/09/2026; a versão deste painel mostra só o simulado.";
+const ARO_PT = "regras do robô Arowana (v29: as mesmas do Barracuda mais um breakeven — quando a operação anda 1R a favor, o stop vai para a entrada + 0,3R a partir do candle seguinte)";
+const TR = {
+en: {
+  "{0} aportes = {1}": "{0} deposits = {1}", "nenhum aporte no intervalo": "no deposit in the range", "Dados até {0}; gerado em {1}.": "Data through {0}; generated {1}.",
+  "Patrimônio": "Equity", "em {0}": "on {0}", "Patrimônio no início do período": "Equity at period start", " · + {0} aportados no período": " · + {0} deposited in the period", " · sem aportes no período": " · no deposits in the period",
+  "Total aportado": "Total deposited", "{0} aporte(s) desde {1}": "{0} deposit(s) since {1}", "Lucro no período": "Profit in period", "Lucro": "Profit", "{0} sobre {1}": "{0} on {1}",
+  "o patrimônio inicial + aportes": "initial equity + deposits", "o aportado": "the amount deposited", "sem aporte": "no deposit", "Retorno da estratégia no período": "Strategy return in period",
+  "{0}%/dia · {1}%/mês": "{0}%/day · {1}%/month", "Queda máxima da estratégia": "Strategy max drawdown", "fundo em {0}": "bottom on {0}", "Operações": "Trades",
+  "acerto {0}% · R médio {1} · PF {2}": "win rate {0}% · avg R {1} · PF {2}",
+  "{0} aberta(s) antes do período: o R e o PF contam o resultado inteiro delas, a curva só a parte dentro do período": "{0} opened before the period: R and PF count their full result, the curve only the part inside the period",
+  "Escolha uma data inicial anterior ao fim dos dados.": "Choose a start date before the end of the data.", "Sem aporte: informe um valor para ver a curva.": "No deposit: enter an amount to see the curve.",
+  " mi": "M", " mil": "k", "aporte": "deposit", "início": "start",
+  "Arraste as bolinhas (ou escolha as datas) para analisar só um período. Passe o mouse para ver o patrimônio em cada data; <b>clique no gráfico</b> para fazer um aporte naquele momento.": "Drag the handles (or pick the dates) to analyze a single period. Hover to see equity on each date; <b>click the chart</b> to make a deposit at that moment.",
+  "Arraste as bolinhas (ou escolha as datas) para analisar só um período. Passe o mouse para ver o patrimônio em cada data.": "Drag the handles (or pick the dates) to analyze a single period. Hover to see equity on each date.",
+  "· azul = seu patrimônio · tracejado = total aportado · traços na base = aportes recorrentes": "· blue = your equity · dashed = total deposited · ticks at the base = recurring deposits", " · faixas = ciclos do halving do BTC": " · bands = BTC halving cycles",
+  "aportado": "deposited", "lucro": "profit", "estratégia abaixo do pico": "strategy below peak", "operações até aqui": "trades so far", "clique para aportar nesta data": "click to deposit on this date", "patrimônio nessa data: {0}": "equity on that date: {0}",
+  "Ano": "Year", "Retorno da estratégia": "Strategy return", "Queda máx. no ano": "Max drawdown in year", "Acerto": "Win rate", "Aportado até o fim do ano": "Deposited by year end", "Seu patrimônio no fim": "Your equity at end",
+  "· {0} operações de {1} a {2}, da primeira à última": "· {0} trades from {1} to {2}, first to last", "Entrada": "Entry", "Saída": "Exit", "Moeda": "Coin", "Conta": "Account", "Lado": "Side", "Preço entrada": "Entry price", "Preço saída": "Exit price", "Motivo": "Reason", "Resultado": "Result", "Seu patrimônio após": "Your equity after",
+  "compra": "long", "venda": "short", "Perdeu a onda": "Lost the wave", "Onda achatou": "Wave flattened", "Tempo": "Time", "Alvo": "Target", "Nenhuma operação com esses filtros.": "No trades with these filters.",
+  "↻ Reproduzir de novo": "↻ Replay", "▶ Continuar": "▶ Continue", "❚❚ Pausar": "❚❚ Pause", "Aporte": "Deposit", "Data": "Date", "Valor": "Amount", "º": "", "remover": "remove",
+  'Sem aportes adicionais. Use "+ Novo aporte" para simular entradas de dinheiro em outras datas.': 'No additional deposits. Use "+ New deposit" to simulate cash-ins on other dates.', "todo o histórico": "entire history",
+  "Escolha um período com pelo menos dois dias e um valor de aporte.": "Choose a period of at least two days and a deposit amount.", "no fim": "at end", "no período": "in period", "ao ano": "per year", "queda máxima": "max drawdown", "Diferença no fim": "Difference at end", "robô": "bot", "acima": "above", "abaixo": "below", "do BTC": "BTC", "dias": "days",
+  "Informe um aporte.": "Enter a deposit.", "{0} → {1} · Arowana com gatilho {2}R → stop em +{3}R": "{0} → {1} · Arowana with trigger {2}R → stop at +{3}R", "Patrimônio no fim": "Equity at end", "Retorno no período": "Return in period", "Retorno ao dia": "Daily return", "Queda máxima": "Max drawdown", "R médio": "Avg R", "Ganho médio (R)": "Avg win (R)", "Maior sequência de perdas": "Longest losing streak", "Meses negativos": "Negative months", "{0} de {1}": "{0} of {1}", "Diferença": "Difference", "Queda": "Drawdown",
+  "Simular com": "Simulate with", "Aportes avulsos": "One-off deposits", "Aporte recorrente (DCA)": "Recurring deposit (DCA)", "Primeiro aporte em": "First deposit on", "+ Novo aporte": "+ New deposit", "a cada": "every", "mês": "month", "semana": "week", "3 meses": "3 months", "de": "from", "até": "to", "Ciclos do BTC": "BTC cycles", "nenhum": "none", "Aporte em": "Deposit on", "Adicionar": "Add", "Cancelar": "Cancel", "Período": "Period", "tudo": "all", "▶ Reproduzir trade a trade": "▶ Replay trade by trade",
+  "Mês a mês": "Month by month", "· retorno da estratégia: aporte no 1º dia do mês, saída no último dia · clique num mês para analisá-lo": "· strategy return: deposit on the 1st day of the month, exit on the last · click a month to analyze it", "Ano a ano": "Year by year", "todos": "all", "todas": "all", "as duas": "both", "ambos": "both", "compras": "longs", "vendas": "shorts",
+  "Como ler estes números": "How to read these numbers", "Simulação, não resultado real.": "Simulation, not real results.",
+  [NOTA_BAR]: "The curve applies the Barracuda bot rules (v28) to Binance spot prices from 11 May 2020 onward, with Hyperliquid fees (maker 0.015%, taker 0.045%), 0.02% slippage and a fixed 5% yearly funding. Equity is marked to market at each candle close. The rules were chosen looking at this same period: future performance tends to be lower, and the drawdown to expect is 30–50%, not the historical one. The bot has traded real money since 27 Sep 2026; this page shows only the simulation.",
+  "Aporte US$": "Deposit US$", "Evolução": "Evolution", "BTC comprado e segurado": "BTC bought and held", "Arraste as bolinhas (ou escolha as datas) para mudar o período; o aporte entra na data de início.": "Drag the handles (or pick the dates) to change the period; the deposit goes in on the start date.",
+  "O mesmo dinheiro, no mesmo período, sem aportes extras: no Barracuda (simulação v28, custos da Hyperliquid) ou comprando BTC à vista e segurando (sem custos). A curva do robô foi ajustada olhando este mesmo período; a do BTC é preço.": "The same money, over the same period, with no extra deposits: in Barracuda (v28 simulation, Hyperliquid costs) or buying spot BTC and holding (no costs). The bot curve was tuned looking at this same period; the BTC curve is just price.",
+  "Quando a operação anda o gatilho a favor (máxima ou mínima do candle), o stop vai para a entrada + 0,3R a partir do candle seguinte. O stop móvel pela onda continua igual. Simulação das duas regras no mesmo período.": "Once a trade moves the trigger distance in its favor (candle high or low), the stop goes to entry + 0.3R from the next candle on. The wave trailing stop stays the same. Simulation of both rules over the same period.",
+  "Arowana: gatilho do breakeven": "Arowana: breakeven trigger", "Comparação no período": "Comparison in period",
+},
+es: {
+  "{0} aportes = {1}": "{0} aportes = {1}", "nenhum aporte no intervalo": "ningún aporte en el intervalo", "Dados até {0}; gerado em {1}.": "Datos hasta {0}; generado el {1}.",
+  "Patrimônio": "Patrimonio", "em {0}": "el {0}", "Patrimônio no início do período": "Patrimonio al inicio del período", " · + {0} aportados no período": " · + {0} aportados en el período", " · sem aportes no período": " · sin aportes en el período",
+  "Total aportado": "Total aportado", "{0} aporte(s) desde {1}": "{0} aporte(s) desde {1}", "Lucro no período": "Ganancia en el período", "Lucro": "Ganancia", "{0} sobre {1}": "{0} sobre {1}",
+  "o patrimônio inicial + aportes": "el patrimonio inicial + aportes", "o aportado": "lo aportado", "sem aporte": "sin aporte", "Retorno da estratégia no período": "Retorno de la estrategia en el período",
+  "{0}%/dia · {1}%/mês": "{0}%/día · {1}%/mes", "Queda máxima da estratégia": "Caída máxima de la estrategia", "fundo em {0}": "mínimo el {0}", "Operações": "Operaciones",
+  "acerto {0}% · R médio {1} · PF {2}": "acierto {0}% · R medio {1} · PF {2}",
+  "{0} aberta(s) antes do período: o R e o PF contam o resultado inteiro delas, a curva só a parte dentro do período": "{0} abierta(s) antes del período: el R y el PF cuentan su resultado completo, la curva solo la parte dentro del período",
+  "Escolha uma data inicial anterior ao fim dos dados.": "Elija una fecha inicial anterior al fin de los datos.", "Sem aporte: informe um valor para ver a curva.": "Sin aporte: ingrese un valor para ver la curva.",
+  " mi": " M", " mil": " mil", "aporte": "aporte", "início": "inicio",
+  "Arraste as bolinhas (ou escolha as datas) para analisar só um período. Passe o mouse para ver o patrimônio em cada data; <b>clique no gráfico</b> para fazer um aporte naquele momento.": "Arrastre los controles (o elija las fechas) para analizar solo un período. Pase el mouse para ver el patrimonio en cada fecha; <b>haga clic en el gráfico</b> para hacer un aporte en ese momento.",
+  "Arraste as bolinhas (ou escolha as datas) para analisar só um período. Passe o mouse para ver o patrimônio em cada data.": "Arrastre los controles (o elija las fechas) para analizar solo un período. Pase el mouse para ver el patrimonio en cada fecha.",
+  "· azul = seu patrimônio · tracejado = total aportado · traços na base = aportes recorrentes": "· azul = su patrimonio · discontinua = total aportado · marcas en la base = aportes recurrentes", " · faixas = ciclos do halving do BTC": " · franjas = ciclos del halving del BTC",
+  "aportado": "aportado", "lucro": "ganancia", "estratégia abaixo do pico": "estrategia bajo el máximo", "operações até aqui": "operaciones hasta aquí", "clique para aportar nesta data": "haga clic para aportar en esta fecha", "patrimônio nessa data: {0}": "patrimonio en esa fecha: {0}",
+  "Ano": "Año", "Retorno da estratégia": "Retorno de la estrategia", "Queda máx. no ano": "Caída máx. en el año", "Acerto": "Acierto", "Aportado até o fim do ano": "Aportado hasta fin de año", "Seu patrimônio no fim": "Su patrimonio al final",
+  "· {0} operações de {1} a {2}, da primeira à última": "· {0} operaciones de {1} a {2}, de la primera a la última", "Entrada": "Entrada", "Saída": "Salida", "Moeda": "Moneda", "Conta": "Cuenta", "Lado": "Lado", "Preço entrada": "Precio entrada", "Preço saída": "Precio salida", "Motivo": "Motivo", "Resultado": "Resultado", "Seu patrimônio após": "Su patrimonio después",
+  "compra": "compra", "venda": "venta", "Perdeu a onda": "Perdió la onda", "Onda achatou": "Onda se aplanó", "Tempo": "Tiempo", "Alvo": "Objetivo", "Nenhuma operação com esses filtros.": "Ninguna operación con esos filtros.",
+  "↻ Reproduzir de novo": "↻ Reproducir de nuevo", "▶ Continuar": "▶ Continuar", "❚❚ Pausar": "❚❚ Pausar", "Aporte": "Aporte", "Data": "Fecha", "Valor": "Valor", "º": "º", "remover": "quitar",
+  'Sem aportes adicionais. Use "+ Novo aporte" para simular entradas de dinheiro em outras datas.': 'Sin aportes adicionales. Use "+ Nuevo aporte" para simular entradas de dinero en otras fechas.', "todo o histórico": "todo el historial",
+  "Escolha um período com pelo menos dois dias e um valor de aporte.": "Elija un período de al menos dos días y un valor de aporte.", "no fim": "al final", "no período": "en el período", "ao ano": "al año", "queda máxima": "caída máxima", "Diferença no fim": "Diferencia al final", "robô": "robot", "acima": "por encima", "abaixo": "por debajo", "do BTC": "del BTC", "dias": "días",
+  "Informe um aporte.": "Ingrese un aporte.", "{0} → {1} · Arowana com gatilho {2}R → stop em +{3}R": "{0} → {1} · Arowana con gatillo {2}R → stop en +{3}R", "Patrimônio no fim": "Patrimonio al final", "Retorno no período": "Retorno en el período", "Retorno ao dia": "Retorno diario", "Queda máxima": "Caída máxima", "R médio": "R medio", "Ganho médio (R)": "Ganancia media (R)", "Maior sequência de perdas": "Mayor racha de pérdidas", "Meses negativos": "Meses negativos", "{0} de {1}": "{0} de {1}", "Diferença": "Diferencia", "Queda": "Caída",
+  "Simular com": "Simular con", "Aportes avulsos": "Aportes puntuales", "Aporte recorrente (DCA)": "Aporte recurrente (DCA)", "Primeiro aporte em": "Primer aporte el", "+ Novo aporte": "+ Nuevo aporte", "a cada": "cada", "mês": "mes", "semana": "semana", "3 meses": "3 meses", "de": "desde", "até": "hasta", "Ciclos do BTC": "Ciclos del BTC", "nenhum": "ninguno", "Aporte em": "Aporte el", "Adicionar": "Agregar", "Cancelar": "Cancelar", "Período": "Período", "tudo": "todo", "▶ Reproduzir trade a trade": "▶ Reproducir operación por operación",
+  "Mês a mês": "Mes a mes", "· retorno da estratégia: aporte no 1º dia do mês, saída no último dia · clique num mês para analisá-lo": "· retorno de la estrategia: aporte el 1.º día del mes, salida el último · haga clic en un mes para analizarlo", "Ano a ano": "Año a año", "todos": "todos", "todas": "todas", "as duas": "las dos", "ambos": "ambos", "compras": "compras", "vendas": "ventas",
+  "Como ler estes números": "Cómo leer estos números", "Simulação, não resultado real.": "Simulación, no resultado real.",
+  [NOTA_BAR]: "La curva aplica las reglas del robot Barracuda (v28) a precios spot de Binance desde el 11/05/2020, con comisiones de Hyperliquid (maker 0,015%, taker 0,045%), deslizamiento de 0,02% y funding fijo de 5% anual. El patrimonio se valora a mercado al cierre de cada vela. Las reglas se eligieron mirando este mismo período: el desempeño futuro tiende a ser menor, y la caída a esperar es de 30–50%, no la histórica. El robot opera dinero real desde el 27/09/2026; esta página muestra solo lo simulado.",
+  "Aporte US$": "Aporte US$", "Evolução": "Evolución", "BTC comprado e segurado": "BTC comprado y mantenido", "Arraste as bolinhas (ou escolha as datas) para mudar o período; o aporte entra na data de início.": "Arrastre los controles (o elija las fechas) para cambiar el período; el aporte entra en la fecha de inicio.",
+  "O mesmo dinheiro, no mesmo período, sem aportes extras: no Barracuda (simulação v28, custos da Hyperliquid) ou comprando BTC à vista e segurando (sem custos). A curva do robô foi ajustada olhando este mesmo período; a do BTC é preço.": "El mismo dinero, en el mismo período, sin aportes extra: en Barracuda (simulación v28, costos de Hyperliquid) o comprando BTC spot y manteniéndolo (sin costos). La curva del robot se ajustó mirando este mismo período; la del BTC es precio.",
+  "Quando a operação anda o gatilho a favor (máxima ou mínima do candle), o stop vai para a entrada + 0,3R a partir do candle seguinte. O stop móvel pela onda continua igual. Simulação das duas regras no mesmo período.": "Cuando la operación avanza el gatillo a favor (máximo o mínimo de la vela), el stop pasa a la entrada + 0,3R a partir de la vela siguiente. El stop móvil por la onda sigue igual. Simulación de las dos reglas en el mismo período.",
+  "Arowana: gatilho do breakeven": "Arowana: gatillo del breakeven", "Comparação no período": "Comparación en el período",
+}};
+TR.en[NOTA_BAR.replace("regras do robô Barracuda (v28)", ARO_PT)] = TR.en[NOTA_BAR].replace("Barracuda bot rules (v28)", "Arowana bot rules (v29: Barracuda's rules plus a breakeven — once a trade moves 1R in its favor, the stop goes to entry + 0.3R from the next candle on)");
+TR.es[NOTA_BAR.replace("regras do robô Barracuda (v28)", ARO_PT)] = TR.es[NOTA_BAR].replace("reglas del robot Barracuda (v28)", "reglas del robot Arowana (v29: las mismas de Barracuda más un breakeven — cuando la operación avanza 1R a favor, el stop pasa a la entrada + 0,3R a partir de la vela siguiente)");
+MES = MESES[LANG];
+Object.assign(TR.en, {"Histórico Black River": "Black River Track Record", "claro": "light", "escuro": "dark", "Patrimônio simulado ao longo do tempo": "Simulated equity over time", "início do período": "period start", "fim do período": "period end", "Robô e BTC no período": "Bot and BTC in the period", "Barracuda e Arowana no período": "Barracuda and Arowana in the period", "Resultados": "Results", "Carregando…": "Loading…", "operações": "trades", "Sem candles para este mês.": "No candles for this month.", "saída": "exit", "fechar": "close"});
+Object.assign(TR.es, {"Histórico Black River": "Historial Black River", "claro": "claro", "escuro": "oscuro", "Patrimônio simulado ao longo do tempo": "Patrimonio simulado a lo largo del tiempo", "início do período": "inicio del período", "fim do período": "fin del período", "Robô e BTC no período": "Robot y BTC en el período", "Barracuda e Arowana no período": "Barracuda y Arowana en el período", "Resultados": "Resultados", "Carregando…": "Cargando…", "operações": "operaciones", "Sem candles para este mês.": "Sin velas para este mes.", "saída": "salida", "fechar": "cerrar"});
+const tx = s => LANG === "pt" ? s : (TR[LANG][s] ?? s);
+const TX = (strs, ...vals) => tx(strs.reduce((acc, p, i) => acc + (i ? `{${i - 1}}` : "") + p, "")).replace(/\{(\d+)\}/g, (_, k) => vals[+k]);
+const MODS = [];
+function temaAtual() { return document.documentElement.dataset.theme || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"); }
+function marcaTema() { [...$("tema").children].forEach(b => b.classList.toggle("on", b.dataset.t === temaAtual())); }
+try { const t = localStorage.getItem("tema"); if (t === "dark" || t === "light") document.documentElement.dataset.theme = t; } catch (e) {}
+marcaTema(); try { matchMedia("(prefers-color-scheme: dark)").addEventListener("change", marcaTema); } catch (e) {}
+$("tema").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; document.documentElement.dataset.theme = b.dataset.t; try { localStorage.setItem("tema", b.dataset.t); } catch (e2) {} marcaTema(); });
+function traduzDOM() {
+  const w = document.createTreeWalker(document.querySelector("main"), NodeFilter.SHOW_TEXT); let n;
+  while ((n = w.nextNode())) { const pt = n.__pt ?? (n.__pt = n.nodeValue), k = pt.trim(); if (!k) continue; const v = tx(k); n.nodeValue = v === k ? pt : pt.replace(k, v); }
+  document.querySelectorAll("main [aria-label]").forEach(el => { const pt = el.__pt ?? (el.__pt = el.getAttribute("aria-label")); el.setAttribute("aria-label", tx(pt)); });
+  document.title = tx("Histórico Black River"); document.documentElement.lang = LANG; [...$("lang").children].forEach(b => b.classList.toggle("on", b.dataset.l === LANG));
+}
+$("lang").addEventListener("click", e => { const b = e.target.closest("button"); if (!b || b.dataset.l === LANG) return; LANG = b.dataset.l; try { localStorage.setItem("lang", LANG); } catch (e2) {}
+  MES = MESES[LANG]; traduzDOM(); MODS.forEach(m => m.rerender()); if (BTC.length) renderB(); if (V29) renderC(); });
+const DIA = 86400;
+let D = null;   // dados do Barracuda (v28); as abas de comparação usam este
+const HIST_HTML = document.getElementById("tab-sim").innerHTML;
+document.getElementById("tab-aro").innerHTML = HIST_HTML.replace(/ for="[^"]*"/g, "").replace("regras do robô Barracuda (v28)", "regras do robô Arowana (v29: as mesmas do Barracuda mais um breakeven — quando a operação anda 1R a favor, o stop vai para a entrada + 0,3R a partir do candle seguinte)");
+traduzDOM();
+document.querySelector(".tabs").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return;
+  document.querySelectorAll(".tabs button").forEach(x => { const on = x === b; x.classList.toggle("on", on); x.setAttribute("aria-selected", on); });
+  ["sim", "aro", "v29", "btc"].forEach(k => { document.getElementById("tab-" + k).hidden = b.dataset.tab !== k; }); });
+async function main() {
+  try { D = await (await fetch("dash_onda34.json", {cache: "no-store"})).json(); }
+  catch (e) { $("chart").innerHTML = '<div class="empty">Não consegui carregar os dados do backtest.</div>'; return; }
+  MODS.push(Historico($("tab-sim"), D)); MODS[0].init();
+  try { BTC = await (await fetch("btc_diario.json", {cache: "no-store"})).json(); bootB(); } catch (e) { $("bChart").innerHTML = '<div class="empty">Não consegui carregar os preços do BTC.</div>'; }
+  try { V29 = await (await fetch("dash_v29.json", {cache: "no-store"})).json(); bootC();
+    const v = V29.variantes["1.0"];   // Arowana = v29 com gatilho 1R → +0,3R (a que está no ar)
+    MODS.push(Historico($("tab-aro"), {gerado: D.gerado, inicio: D.inicio, fim: D.fim, banca: D.banca, ciclos: D.ciclos, colunas: V29.colunas, trades: v.trades, curva: v.curva, resumo: v.resumo})); MODS[1].init(); traduzDOM();
+  } catch (e) { $("cChart").innerHTML = '<div class="empty">Não consegui carregar a simulação da Arowana.</div>'; $("tab-aro").innerHTML = '<div class="empty">Não consegui carregar a simulação da Arowana.</div>'; }
+}
+main();
+</script>
+</body></html>
