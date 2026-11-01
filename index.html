@@ -16,6 +16,12 @@ h2{font-size:15px;font-weight:600;margin:28px 0 10px;text-wrap:balance}
 .mut{color:var(--mut)}.pos{color:var(--pos)}.neg{color:var(--neg)}
 .num{font-family:var(--mono);font-variant-numeric:tabular-nums}
 header{display:flex;flex-wrap:wrap;gap:12px 24px;justify-content:space-between;align-items:flex-end}
+.brand{display:flex;align-items:center;gap:12px}
+.logo{height:64px;width:auto}
+.logo-dark{display:none}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .logo-light{display:none}:root:not([data-theme="light"]) .logo-dark{display:block}}
+:root[data-theme="dark"] .logo-light{display:none}
+:root[data-theme="dark"] .logo-dark{display:block}
 .ctl{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
 label.f{display:flex;align-items:center;gap:6px;color:var(--mut);font-size:13px}
 input[type=number]{width:120px;font:14px var(--mono);padding:5px 8px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--fg)}
@@ -60,6 +66,7 @@ input[type=checkbox]{accent-color:var(--acc);width:15px;height:15px}
 .tabs{display:flex;gap:4px;margin-top:16px;border-bottom:1px solid var(--line)}
 .tabs button{font:17px var(--ui);padding:10px 18px;border:0;border-bottom:3px solid transparent;background:none;color:var(--mut);cursor:pointer;margin-bottom:-1px}
 .tabs button.on{color:var(--fg);border-bottom-color:var(--acc);font-weight:500}
+.tabs button[data-tab="sim"],.tabs button[data-tab="aro"],.tabs button[data-tab="catfish"],.tabs button.on[data-tab="sim"],.tabs button.on[data-tab="aro"],.tabs button.on[data-tab="catfish"]{color:var(--btc)}
 .tile.b{border-top:3px solid var(--btc)}.tile.r{border-top:3px solid var(--acc)}.tile.aro{border-top:3px solid var(--pos)}.tile.cat{border-top:3px solid var(--cat)}
 #meses th{text-align:center;padding:6px 4px}#meses td{padding:0;text-align:center}#meses td.y{text-align:left;padding:6px 8px;font-weight:500}
 #meses td .c{display:block;padding:7px 4px;font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:12px}#meses td.m{cursor:pointer}#meses td.tot .c{font-weight:600}
@@ -70,9 +77,6 @@ input[type=checkbox]{accent-color:var(--acc);width:15px;height:15px}
 
 /* Resultados do mês (clique na tabela mês a mês) */
 .rm-pill{display:inline-block;border-radius:999px;padding:2px 10px;font-size:13px;font-weight:500;border:1px solid var(--line);background:var(--card)}
-.rm-split{display:grid;grid-template-columns:330px minmax(0,1fr);gap:14px}@media (max-width:760px){.rm-split{grid-template-columns:1fr}}
-.rm-lista{max-height:440px;overflow:auto;border:1px solid var(--line);border-radius:8px}.rm-lista table{border-collapse:collapse;width:100%;font-size:12.5px}
-.rm-lista td{padding:5px 7px;border-bottom:1px solid var(--line);cursor:pointer;white-space:nowrap}.rm-lista tr.on td{background:color-mix(in srgb, var(--acc) 12%, transparent)}.rm-lista td.n{text-align:right}
 .rm-hdr{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:baseline;margin-bottom:6px;font-size:13px}.rm-hdr .big{font-size:16px;font-weight:600}
 .rm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px}
 .rm-mini{border:1px solid var(--line);border-radius:8px;padding:6px;background:var(--card);border-top:3px solid var(--line);cursor:pointer}.rm-mini.w{border-top-color:var(--pos)}.rm-mini.l{border-top-color:var(--neg)}
@@ -83,7 +87,11 @@ input[type=checkbox]{accent-color:var(--acc);width:15px;height:15px}
 
 <main>
 <header>
-  <div>
+  <div class="brand">
+    <a href="https://blackriverbtc.com/" target="_blank" rel="noopener">
+      <img src="logo-light.png" alt="Black River BTC" class="logo logo-light">
+      <img src="logo-dark.png" alt="Black River BTC" class="logo logo-dark">
+    </a>
     <h1>Histórico Black River</h1>
   </div>
   <div class="ctl">
@@ -149,7 +157,7 @@ input[type=checkbox]{accent-color:var(--acc);width:15px;height:15px}
 <div class="card tw" style="padding:0"><table id="meses"></table></div>
 <section id="resMes" hidden>
 <h2 style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span>Resultados</span><span class="rm-pill" id="resTit"></span><button class="btn" id="resX" style="margin-left:auto" aria-label="fechar">✕</button></h2>
-<div class="card rm-split"><div class="rm-lista"><table id="resLista"></table></div><div style="min-width:0"><div class="rm-hdr" id="resHdr"></div><div class="rm-a" id="resA"></div><div style="display:flex;gap:6px;margin-top:8px"><button class="btn" id="resPrev">‹</button><button class="btn" id="resNext">›</button></div></div></div>
+<div class="card"><div class="rm-hdr" id="resHdr"></div><div class="rm-a" id="resA"></div><div style="display:flex;gap:6px;margin-top:8px"><button class="btn" id="resPrev">‹</button><button class="btn" id="resNext">›</button></div></div>
 <div class="rm-grid" id="resB" style="margin-top:10px"></div>
 <div class="rm-tip" id="resBTip"></div>
 <div class="card chartwrap rm-c" style="margin-top:10px" id="resC"></div>
@@ -158,17 +166,8 @@ input[type=checkbox]{accent-color:var(--acc);width:15px;height:15px}
 <h2>Ano a ano</h2>
 <div class="card tw"><table id="anos"></table></div>
 
-<h2>Operações <span class="mut" id="opsN" style="font-weight:400"></span></h2>
-<div class="ctl" style="margin-bottom:8px">
-  <label class="f" for="fAno">Ano <select id="fAno"><option value="">todos</option></select></label>
-  <label class="f" for="fMoeda">Moeda <select id="fMoeda"><option value="">todas</option></select></label>
-  <label class="f" for="fConta">Conta <select id="fConta"><option value="">as duas</option><option value="4h">4h</option><option value="12h">12h</option></select></label>
-  <label class="f" for="fLado">Lado <select id="fLado"><option value="">ambos</option><option value="1">compras</option><option value="-1">vendas</option></select></label>
-</div>
-<div class="card tw"><table id="ops"></table></div>
-
 <h2>Como ler estes números</h2>
-<p class="note"><b>Simulação, não resultado real.</b> A curva aplica as regras do robô Barracuda (v28) a preços à vista da Binance de 11/05/2020 em diante, com taxas da Hyperliquid (maker 0,015%, taker 0,045%), derrapagem de 0,02% e funding fixo de 5% ao ano. O patrimônio é marcado a mercado no fechamento de cada candle. As regras foram escolhidas olhando o mesmo período: o desempenho futuro tende a ser menor, e a queda a esperar é de 30–50%, não a histórica. O robô opera dinheiro real desde 27/09/2026; a versão deste painel mostra só o simulado. <span id="gerado"></span></p>
+<p class="note"><b>Simulação, não resultado real.</b> A curva aplica as regras do robô Barracuda (v28) a preços à vista da Binance de 11/05/2020 em diante, já com os custos de operar na Hyperliquid incluídos. O patrimônio é marcado a mercado no fechamento de cada candle. As regras foram escolhidas olhando o mesmo período: o desempenho futuro tende a ser menor, e a queda a esperar é de 30–50%, não a histórica. O robô opera dinheiro real desde 27/09/2026; a versão deste painel mostra só o simulado. <span id="gerado"></span></p>
 </div>
 
 <div id="tab-aro" hidden></div>
@@ -230,11 +229,10 @@ input[type=checkbox]{accent-color:var(--acc);width:15px;height:15px}
 </div>
 
 <div id="tab-v29" hidden>
-<p class="note" style="margin:12px 0 0"><b>Arowana = Barracuda + breakeven.</b> Quando a operação anda o gatilho a favor (máxima ou mínima do candle), o stop vai para a entrada + 0,3R a partir do candle seguinte. O stop móvel pela onda continua igual. Simulação das duas regras no mesmo período.</p>
+<p class="note" style="margin:12px 0 0"><b>Arowana = Barracuda + uma regra adicional de proteção do lucro.</b> Simulação das duas regras no mesmo período.</p>
 <section class="card" style="margin-top:10px">
   <div class="ctl">
     <label class="f" for="cCap">Aporte US$ <input type="number" id="cCap" value="1000" min="1" step="1000"></label>
-    <label class="f" for="cVar">Arowana: gatilho do breakeven <select id="cVar"><option value="0.75">0,75R</option><option value="1.0" selected>1R</option><option value="1.5">1,5R</option></select></label>
     <span class="mut" id="cInfo" style="font-size:12.5px"></span>
   </div>
 </section>
@@ -354,7 +352,7 @@ function renderB() {
 }
 // ---- Aba V28 × V29: mesma banca, mesmo período; V29 = breakeven (dash_v29.json, variantes por gatilho)
 let V29 = null, cDe = 0, cAte = 0, cScale = "log", cIni = 0, cFim = 0;
-function v29() { const v = V29.variantes[$("cVar").value]; if (!v.T) v.T = v.trades.map(t => Object.fromEntries(V29.colunas.map((c, i) => [c, t[i]]))); return v; }
+function v29() { const v = V29.variantes["1.0"]; if (!v.T) v.T = v.trades.map(t => Object.fromEntries(V29.colunas.map((c, i) => [c, t[i]]))); return v; }
 function statsC(curva, trades, a, b, cap) {
   const C = serie(curva, a, b, cap); const T = trades.filter(t => t.saida >= a && t.saida <= b);
   const R = T.map(t => t.R), W = R.filter(r => r > 0); let seq = 0, best = 0; R.forEach(r => { seq = r <= 0 ? seq + 1 : 0; best = Math.max(best, seq); });
@@ -388,7 +386,7 @@ function renderC() {
   const cap = +$("cCap").value || 0; if (!(cap > 0)) { $("cTab").innerHTML = ""; $("cChart").innerHTML = `<div class="empty">${tx("Informe um aporte.")}</div>`; return; }
   const v = v29(), A = statsC(D.curva, D.T, cDe, cAte, cap), B = statsC(v.curva, v.T, cDe, cAte, cap);
   const Cf = statsCatfish(CATFISH_CURVA || [[cDe, cap]], CATFISH_TRADES, cDe, cAte, cap);
-  $("cInfo").textContent = TX`${dia(cDe)} → ${dia(cAte)} · Arowana com gatilho ${v.gatilho}R → stop em +${v.stop_para}R`;
+  $("cInfo").textContent = TX`${dia(cDe)} → ${dia(cAte)}`;
   const d = (x, y, f, inv) => { const z = y - x; return `<td class="n ${(inv ? -z : z) >= 0 ? "pos" : "neg"}">${f(z, true)}</td>`; };
   const fU = (x, s) => (s && x > 0 ? "+" : "") + fmtUSD(x), fP = (x, s) => fmtPct(x, 0), fN = (x, s) => (s && x > 0 ? "+" : "") + Math.round(x).toLocaleString(LOC()), fR = (x, s) => (x > 0 ? "+" : "") + x.toFixed(2) + "R", fP1 = (x, s) => fmtPct(x, 1), pts = (z, d = 0) => (z > 0 ? "+" : "") + z.toLocaleString(LOC(), {minimumFractionDigits: d, maximumFractionDigits: d}) + tx(" pts"), pc = (x, d = 1) => x.toLocaleString(LOC(), {minimumFractionDigits: d, maximumFractionDigits: d}) + "%";
   const rows = [[tx("Patrimônio no fim"), fU(A.fim), fU(B.fim), d(A.fim, B.fim, fU), fU(Cf.fim)], [tx("Retorno no período"), fP(A.ret), fP(B.ret), d(A.ret, B.ret, (z) => pts(z)), fP(Cf.ret)],
@@ -414,7 +412,7 @@ $("cRB").addEventListener("input", () => setPerC(cDe, cIni + $("cRB").value * DI
 $("cTudo").addEventListener("click", () => setPerC(cIni, cFim));
 $("cDe").addEventListener("change", () => { const t = deIso($("cDe").value); if (t) setPerC(t, cAte); });
 $("cAte").addEventListener("change", () => { const t = deIso($("cAte").value); if (t) setPerC(cDe, t); });
-$("cCap").addEventListener("input", renderC); $("cVar").addEventListener("change", renderC);
+$("cCap").addEventListener("input", renderC);
 $("bDe").addEventListener("change", () => { const t = deIso($("bDe").value); if (t) setPerB(t, bAte); });
 $("bAte").addEventListener("change", () => { const t = deIso($("bAte").value); if (t) setPerB(bDe, t); });
 $("bCap").addEventListener("input", renderB);
@@ -456,8 +454,6 @@ function gerarAP() {
 function init() {
   D.T = D.trades.map(t => Object.fromEntries(D.colunas.map((c, i) => [c, t[i]])));
   D.cT = D.curva.map(p => p[0]); D.cV = D.curva.map(p => p[1]);
-  [...new Set(D.T.map(t => dia(t.saida).slice(-4)))].sort().forEach(a => $("fAno").insertAdjacentHTML("beforeend", `<option>${a}</option>`));
-  [...new Set(D.T.map(t => t.moeda))].sort().forEach(m => $("fMoeda").insertAdjacentHTML("beforeend", `<option>${m}</option>`));
   $("gerado").textContent = TX`Dados até ${dia(D.fim)}; gerado em ${D.gerado}.`;
   const m1 = Math.min(Math.max(D.inicio, anoAtualIni()), D.fim - DIA);   // site sempre abre em 1º de janeiro (Felipe 01/11/2026)
   $("dIni").min = iso(D.inicio); $("dIni").max = iso(D.fim); $("dIni").value = iso(m1);
@@ -622,15 +618,10 @@ function anos(V) {
     rows.map(([y, r, dd, n, a, eq, inv]) => `<tr><td>${y}</td><td class="n ${r >= 0 ? "pos" : "neg"}">${fmtPct(r * 100, 0)}</td><td class="n">${fmtPct(-dd * 100)}</td><td class="n">${n}</td><td class="n">${(a * 100).toFixed(0)}%</td><td class="n">${fmtUSD(inv)}</td><td class="n">${fmtUSD(eq)}</td></tr>`).join("");
 }
 
-function lista(V) {
-  const a = $("fAno").value, m = $("fMoeda").value, c = $("fConta").value, l = $("fLado").value;
-  const T = V.slice(0, idx).filter(t => (!a || dia(t.saida).endsWith(a)) && (!m || t.moeda === m) && (!c || t.conta === c) && (!l || String(t.lado) === l));
-  $("opsN").textContent = TX`· ${T.length.toLocaleString(LOC())} operações de ${dia(t0())} a ${dia(tF())}, da primeira à última`;
-  $("ops").innerHTML = `<tr><th>#</th><th>${tx("Entrada")}</th><th>${tx("Saída")}</th><th>${tx("Moeda")}</th><th>${tx("Conta")}</th><th>${tx("Lado")}</th><th class="n">${tx("Preço entrada")}</th><th class="n">${tx("Preço saída")}</th><th>${tx("Motivo")}</th><th class="n">R</th><th class="n">${tx("Resultado")}</th><th class="n">${tx("Seu patrimônio após")}</th></tr>` +
-    (T.map(t => { const i = V.indexOf(t) + 1, antes = bal(t.banca_apos / (1 + t.pct / 100), t.saida), usd = antes * t.pct / 100;
-      return `<tr><td class="mut num">${i}</td><td class="num">${dia(t.entrada)}</td><td class="num">${dia(t.saida)}</td><td>${t.moeda}</td><td class="mut">${t.conta}</td><td><span class="tag ${t.lado > 0 ? "lg" : "sh"}">${tx(t.lado > 0 ? "compra" : "venda")}</span></td><td class="n">${t.preco_entrada.toLocaleString(LOC(), {maximumSignificantDigits: 6})}</td><td class="n">${t.preco_saida.toLocaleString(LOC(), {maximumSignificantDigits: 6})}</td><td class="mut">${tx(t.motivo)}</td><td class="n ${t.R > 0 ? "pos" : "neg"}">${(t.R > 0 ? "+" : "") + t.R.toFixed(2)}</td><td class="n ${usd >= 0 ? "pos" : "neg"}">${(usd >= 0 ? "+" : "") + fmtUSD(usd)}</td><td class="n">${fmtUSD(bal(t.banca_apos, t.saida))}</td></tr>`; }).join("")
-     || `<tr><td colspan="12" class="empty">${tx("Nenhuma operação com esses filtros.")}</td></tr>`);
-}
+// Lista detalhada de operações (preço de entrada/saída por operação) foi tirada da página a pedido do Felipe
+// (01/11/2026): dava para reconstruir a lógica da estratégia cruzando milhares de pontos de entrada/saída
+// exatos com o preço histórico. lista() fica como no-op pra não quebrar quem ainda chama (replay, filtros).
+function lista(V) {}
 
 let ult = 0;
 function tick() { const V = visiveis(); idx = Math.min(V.length, idx + speed); render(true); if (Date.now() - ult > 1000) { lista(V); listaSuja = false; ult = Date.now(); } if (idx >= V.length) stop(); }
@@ -665,7 +656,6 @@ $("popX").addEventListener("click", () => { $("pop").style.display = "none"; });
 $("popOk").addEventListener("click", () => { const v = +$("popV").value, t = +$("pop").dataset.t; if (v > 0 && t >= inicio() && t <= D.fim) { aportes.push({t, v}); $("pop").style.display = "none"; aplicarAportes(); } });
 $("popV").addEventListener("keydown", e => { if (e.key === "Enter") $("popOk").click(); if (e.key === "Escape") $("popX").click(); });
 $("aportes").addEventListener("click", e => { const b = e.target.closest("button[data-del]"); if (!b) return; aportes.splice(+b.dataset.del, 1); aplicarAportes(); });
-["fAno", "fMoeda", "fConta", "fLado"].forEach(id => $(id).addEventListener("change", () => lista(visiveis())));
 
 // ---- Resultados do mês (clique na tabela mês a mês): linha do tempo + lista/gráfico + mosaico, candles de meses/AAAA-MM.json
 const MESJ = {}; let rm = null; const SEC = {"4h": 14400, "12h": 43200};
@@ -676,7 +666,7 @@ async function abrirMes(y, m) {
   const ops = D.T.filter(t => t.saida >= a && t.saida <= b).sort((x, z) => x.saida - z.saida), r = retMes(y, m);
   $("resTit").innerHTML = `${MES[m]}/${y} · <span class="${r >= 0 ? "pos" : "neg"}">${fmtPct(r * 100)}</span> · ${ops.length} ${tx("operações")}`;
   $("resMes").hidden = false; $("resMes").scrollIntoView({behavior: "smooth", block: "start"});
-  ["resC", "resA", "resB"].forEach(id => { $(id).innerHTML = `<div class="empty">${tx("Carregando…")}</div>`; }); $("resLista").innerHTML = ""; $("resHdr").innerHTML = "";
+  ["resC", "resA", "resB"].forEach(id => { $(id).innerHTML = `<div class="empty">${tx("Carregando…")}</div>`; }); $("resHdr").innerHTML = "";
   if (!MESJ[k]) { try { MESJ[k] = await (await fetch(`meses/${k}.json`, {cache: "no-store"})).json(); } catch (e) { MESJ[k] = {candles: {}}; } }
   rm = {ops, i: 0, cs: MESJ[k].candles || {}, a, b, y, m}; renderRM();
 }
@@ -693,9 +683,11 @@ function candleSVG(o, W, H, mini) {
     g += `<g><title>${dh(c[0])} UTC · O ${c[1]} H ${c[2]} L ${c[3]} C ${c[4]}</title><line x1="${X(i).toFixed(1)}" x2="${X(i).toFixed(1)}" y1="${Y(c[2]).toFixed(1)}" y2="${Y(c[3]).toFixed(1)}" stroke="var(--mut)" stroke-width="1"/><rect x="${(X(i) - bw * 0.35).toFixed(1)}" y="${y1.toFixed(1)}" width="${Math.max(0.8, bw * 0.7).toFixed(1)}" height="${Math.max(1, y2 - y1).toFixed(1)}" fill="${col}"/></g>`; });
   g += `<line x1="${X(iE).toFixed(1)}" x2="${X(iS).toFixed(1)}" y1="${Y(stop).toFixed(1)}" y2="${Y(stop).toFixed(1)}" stroke="var(--neg)" stroke-dasharray="4 3" stroke-width="1.3"/>`;
   g += `<line x1="${X(iE).toFixed(1)}" x2="${X(iS).toFixed(1)}" y1="${Y(o.preco_entrada).toFixed(1)}" y2="${Y(o.preco_entrada).toFixed(1)}" stroke="var(--acc)" stroke-dasharray="2 3" stroke-opacity=".7"/>`;
-  const ye = Y(o.preco_entrada), xe = X(iE), r = mini ? 4 : 7, d = o.lado > 0 ? 1 : -1;
-  g += `<path d="M${(xe - r).toFixed(1)},${(ye + d * (r + 3)).toFixed(1)} L${(xe + r).toFixed(1)},${(ye + d * (r + 3)).toFixed(1)} L${xe.toFixed(1)},${(ye + d * 3).toFixed(1)} Z" fill="var(--acc)"><title>${rmLado(o)} ${o.preco_entrada} · ${dh(o.entrada)} UTC</title></path>`;
-  g += `<circle cx="${X(iS).toFixed(1)}" cy="${Y(o.preco_saida).toFixed(1)}" r="${mini ? 3.5 : 5.5}" fill="${o.R > 0 ? "var(--pos)" : "var(--neg)"}" stroke="var(--card)" stroke-width="1.5"><title>${tx("saída")} ${o.preco_saida} · ${dh(o.saida)} UTC · ${rmR(o)}</title></circle>`;
+  const yBase = H - B - (mini ? 2 : 4), re = mini ? 3 : 6, rs = mini ? 2.5 : 5, minDist = re + rs + (mini ? 2 : 4);
+  let xe = X(iE), xs = X(iS);
+  if (Math.abs(xs - xe) < minDist) { const mid = (xe + xs) / 2, half = minDist / 2; xe = mid - half; xs = mid + half; }
+  g += `<path d="M${(xe - re).toFixed(1)},${yBase.toFixed(1)} L${(xe + re).toFixed(1)},${yBase.toFixed(1)} L${xe.toFixed(1)},${(yBase - re - 2.5).toFixed(1)} Z" fill="var(--acc)" stroke="var(--card)" stroke-width="${mini ? 0 : 1.5}"><title>${rmLado(o)} ${o.preco_entrada} · ${dh(o.entrada)} UTC</title></path>`;
+  g += `<circle cx="${xs.toFixed(1)}" cy="${yBase.toFixed(1)}" r="${rs}" fill="${o.R > 0 ? "var(--pos)" : "var(--neg)"}" stroke="var(--card)" stroke-width="${mini ? 1 : 2}"><title>${tx("saída")} ${o.preco_saida} · ${dh(o.saida)} UTC · ${rmR(o)}</title></circle>`;
   return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${o.moeda} ${o.conta}">${g}</svg>`;
 }
 function renderRM() {
@@ -713,17 +705,13 @@ function renderRM() {
     ops.forEach((p, i) => { if (p.moeda !== c) return; const a = Math.max(x0, p.entrada), b = Math.min(x1, p.saida), w = Math.max(3, X(b) - X(a));
       g += `<rect data-i="${i}" x="${X(a).toFixed(1)}" y="${y + 3}" width="${w.toFixed(1)}" height="${lane - 6}" rx="3" fill="${p.R > 0 ? "var(--pos)" : "var(--neg)"}" fill-opacity="${i === rm.i ? 1 : .7}" stroke="${i === rm.i ? "var(--fg)" : "none"}" style="cursor:pointer"><title>${p.moeda} ${p.conta} ${rmLado(p)} · ${dh(p.entrada)} → ${dh(p.saida)} UTC · ${rmR(p)} · ${rmP(p)}</title></rect>`; }); });
   $("resC").innerHTML = `<svg viewBox="0 0 ${W} ${Hb + coins.length * lane + 6}" width="100%" role="img">${g}</svg>`;
-  // lista + gráfico
-  $("resLista").innerHTML = ops.map((p, i) => `<tr data-i="${i}" class="${i === rm.i ? "on" : ""}"><td><b>${p.moeda}</b> <span class="mut">${p.conta}</span></td><td><span class="tag ${p.lado > 0 ? "lg" : "sh"}">${rmLado(p)}</span></td><td class="num mut">${dia(p.saida).slice(0, 5)}</td><td class="n num ${p.R > 0 ? "pos" : "neg"}">${rmR(p)}</td><td class="n num ${p.pct >= 0 ? "pos" : "neg"}">${rmP(p)}</td></tr>`).join("");
   if (!o) { $("resHdr").innerHTML = ""; $("resA").innerHTML = ""; $("resB").innerHTML = ""; return; }
-  $("resHdr").innerHTML = `<span class="big">${o.moeda} <span class="mut" style="font-weight:400">${o.conta} · ${rmLado(o)}</span></span><span class="num mut">${dh(o.entrada)} → ${dh(o.saida)} UTC</span><span class="num ${o.R > 0 ? "pos" : "neg"}" style="font-weight:600">${rmR(o)} · ${rmP(o)}</span><span class="mut">${tx(o.motivo)}</span><span class="mut num">${rm.i + 1}/${ops.length}</span>`;
+  $("resHdr").innerHTML = `<span class="big">${o.moeda} <span class="mut" style="font-weight:400">${o.conta} · ${rmLado(o)}</span></span><span class="num mut">${dh(o.entrada)} → ${dh(o.saida)} UTC</span><span class="num ${o.R > 0 ? "pos" : "neg"}" style="font-weight:600">${rmR(o)} · ${rmP(o)}</span><span class="mut">Stop</span><span class="mut num">${rm.i + 1}/${ops.length}</span>`;
   $("resA").innerHTML = candleSVG(o, 820, 340, false);
-  const on = $("resLista").querySelector("tr.on"); if (on) on.scrollIntoView({block: "nearest"});
   $("resB").innerHTML = ops.map((p, i) => `<div class="rm-mini ${p.R > 0 ? "w" : "l"}" data-i="${i}" role="button" tabindex="0"><div class="t"><span><b>${p.moeda}</b> <span class="mut">${p.conta}</span></span><span class="num ${p.R > 0 ? "pos" : "neg"}">${rmR(p)}</span></div>${candleSVG(p, 170, 80, true)}</div>`).join("");
 }
 function rmSel(i) { rm.i = i; renderRM(); }
 $("resC").addEventListener("click", e => { const r = e.target.closest("rect[data-i]"); if (r) { rmSel(+r.dataset.i); $("resA").scrollIntoView({behavior: "smooth", block: "center"}); } });
-$("resLista").addEventListener("click", e => { const tr = e.target.closest("tr[data-i]"); if (tr) rmSel(+tr.dataset.i); });
 $("resB").addEventListener("click", e => { const m = e.target.closest(".rm-mini"); if (m) { rmSel(+m.dataset.i); $("resA").scrollIntoView({behavior: "smooth", block: "center"}); } });
 $("resB").addEventListener("mousemove", e => {
   const card = e.target.closest(".rm-mini"), tipEl = $("resBTip");
@@ -749,8 +737,8 @@ let MES = null;
 const LANGS = {pt: "pt-BR", en: "en-US", es: "es-ES"};
 let LANG = "pt"; try { LANG = new URLSearchParams(location.search).get("lang") || localStorage.getItem("lang") || "pt"; } catch (e) {} if (!LANGS[LANG]) LANG = "pt";
 const LOC = () => LANGS[LANG];
-const NOTA_BAR = "A curva aplica as regras do robô Barracuda (v28) a preços à vista da Binance de 11/05/2020 em diante, com taxas da Hyperliquid (maker 0,015%, taker 0,045%), derrapagem de 0,02% e funding fixo de 5% ao ano. O patrimônio é marcado a mercado no fechamento de cada candle. As regras foram escolhidas olhando o mesmo período: o desempenho futuro tende a ser menor, e a queda a esperar é de 30–50%, não a histórica. O robô opera dinheiro real desde 27/09/2026; a versão deste painel mostra só o simulado.";
-const ARO_PT = "regras do robô Arowana (v29: as mesmas do Barracuda mais um breakeven — quando a operação anda 1R a favor, o stop vai para a entrada + 0,3R a partir do candle seguinte)";
+const NOTA_BAR = "A curva aplica as regras do robô Barracuda (v28) a preços à vista da Binance de 11/05/2020 em diante, já com os custos de operar na Hyperliquid incluídos. O patrimônio é marcado a mercado no fechamento de cada candle. As regras foram escolhidas olhando o mesmo período: o desempenho futuro tende a ser menor, e a queda a esperar é de 30–50%, não a histórica. O robô opera dinheiro real desde 27/09/2026; a versão deste painel mostra só o simulado.";
+const ARO_PT = "regras do robô Arowana (v29: as mesmas do Barracuda mais uma regra adicional de proteção do lucro)";
 const TR = {
 en: {
   "{0} aportes = {1}": "{0} deposits = {1}", "nenhum aporte no intervalo": "no deposit in the range", "Dados até {0}; gerado em {1}.": "Data through {0}; generated {1}.",
@@ -776,7 +764,7 @@ en: {
   "Simular com": "Simulate with", "Aportes avulsos": "One-off deposits", "Aporte recorrente (DCA)": "Recurring deposit (DCA)", "Primeiro aporte em": "First deposit on", "+ Novo aporte": "+ New deposit", "a cada": "every", "mês": "month", "semana": "week", "3 meses": "3 months", "de": "from", "até": "to", "Ciclos do BTC": "BTC cycles", "nenhum": "none", "Aporte em": "Deposit on", "Adicionar": "Add", "Cancelar": "Cancel", "Período": "Period", "tudo": "all", "▶ Reproduzir trade a trade": "▶ Replay trade by trade",
   "Mês a mês": "Month by month", "· retorno da estratégia: aporte no 1º dia do mês, saída no último dia · clique num mês para analisá-lo": "· strategy return: deposit on the 1st day of the month, exit on the last · click a month to analyze it", "Ano a ano": "Year by year", "todos": "all", "todas": "all", "as duas": "both", "ambos": "both", "compras": "longs", "vendas": "shorts",
   "Como ler estes números": "How to read these numbers", "Simulação, não resultado real.": "Simulation, not real results.",
-  [NOTA_BAR]: "The curve applies the Barracuda bot rules (v28) to Binance spot prices from 11 May 2020 onward, with Hyperliquid fees (maker 0.015%, taker 0.045%), 0.02% slippage and a fixed 5% yearly funding. Equity is marked to market at each candle close. The rules were chosen looking at this same period: future performance tends to be lower, and the drawdown to expect is 30–50%, not the historical one. The bot has traded real money since 27 Sep 2026; this page shows only the simulation.",
+  [NOTA_BAR]: "The curve applies the Barracuda bot rules (v28) to Binance spot prices from 11 May 2020 onward, already including the costs of trading on Hyperliquid. Equity is marked to market at each candle close. The rules were chosen looking at this same period: future performance tends to be lower, and the drawdown to expect is 30–50%, not the historical one. The bot has traded real money since 27 Sep 2026; this page shows only the simulation.",
   "Aporte US$": "Deposit US$", "Evolução": "Evolution", "BTC comprado e segurado": "BTC bought and held", "Arraste as bolinhas (ou escolha as datas) para mudar o período; o aporte entra na data de início.": "Drag the handles (or pick the dates) to change the period; the deposit goes in on the start date.",
   "O mesmo dinheiro, no mesmo período, sem aportes extras, em quatro curvas: Barracuda (simulação v28, custos da Hyperliquid), Arowana (v28 + breakeven), Cat Fish (histórico de operações, sem código próprio — ver a aba Cat Fish) e BTC à vista comprado e segurado (sem custos). O Cat Fish só tem dados a partir de agosto de 2026; antes disso a linha dele fica parada no início. As curvas do robô foram ajustadas olhando este mesmo período; a do BTC é preço.": "The same money, over the same period, with no extra deposits, in four curves: Barracuda (v28 simulation, Hyperliquid costs), Arowana (v28 + breakeven), Cat Fish (trade history, no code of its own — see the Cat Fish tab) and spot BTC bought and held (no costs). Cat Fish only has data from August 2026 on; before that its line stays flat at the start. The bot curves were tuned looking at this same period; the BTC curve is just price.",
   "O Cat Fish só tem dados a partir de agosto de 2026 (histórico de operações, não simulação de patrimônio — ver a aba Cat Fish); antes disso a linha dele fica parada no início.": "Cat Fish only has data from August 2026 on (trade history, not an equity simulation — see the Cat Fish tab); before that its line stays flat at the start.",
@@ -808,7 +796,7 @@ es: {
   "Simular com": "Simular con", "Aportes avulsos": "Aportes puntuales", "Aporte recorrente (DCA)": "Aporte recurrente (DCA)", "Primeiro aporte em": "Primer aporte el", "+ Novo aporte": "+ Nuevo aporte", "a cada": "cada", "mês": "mes", "semana": "semana", "3 meses": "3 meses", "de": "desde", "até": "hasta", "Ciclos do BTC": "Ciclos del BTC", "nenhum": "ninguno", "Aporte em": "Aporte el", "Adicionar": "Agregar", "Cancelar": "Cancelar", "Período": "Período", "tudo": "todo", "▶ Reproduzir trade a trade": "▶ Reproducir operación por operación",
   "Mês a mês": "Mes a mes", "· retorno da estratégia: aporte no 1º dia do mês, saída no último dia · clique num mês para analisá-lo": "· retorno de la estrategia: aporte el 1.º día del mes, salida el último · haga clic en un mes para analizarlo", "Ano a ano": "Año a año", "todos": "todos", "todas": "todas", "as duas": "las dos", "ambos": "ambos", "compras": "compras", "vendas": "ventas",
   "Como ler estes números": "Cómo leer estos números", "Simulação, não resultado real.": "Simulación, no resultado real.",
-  [NOTA_BAR]: "La curva aplica las reglas del robot Barracuda (v28) a precios spot de Binance desde el 11/05/2020, con comisiones de Hyperliquid (maker 0,015%, taker 0,045%), deslizamiento de 0,02% y funding fijo de 5% anual. El patrimonio se valora a mercado al cierre de cada vela. Las reglas se eligieron mirando este mismo período: el desempeño futuro tiende a ser menor, y la caída a esperar es de 30–50%, no la histórica. El robot opera dinero real desde el 27/09/2026; esta página muestra solo lo simulado.",
+  [NOTA_BAR]: "La curva aplica las reglas del robot Barracuda (v28) a precios spot de Binance desde el 11/05/2020, ya con los costos de operar en Hyperliquid incluidos. El patrimonio se valora a mercado al cierre de cada vela. Las reglas se eligieron mirando este mismo período: el desempeño futuro tiende a ser menor, y la caída a esperar es de 30–50%, no la histórica. El robot opera dinero real desde el 27/09/2026; esta página muestra solo lo simulado.",
   "Aporte US$": "Aporte US$", "Evolução": "Evolución", "BTC comprado e segurado": "BTC comprado y mantenido", "Arraste as bolinhas (ou escolha as datas) para mudar o período; o aporte entra na data de início.": "Arrastre los controles (o elija las fechas) para cambiar el período; el aporte entra en la fecha de inicio.",
   "O mesmo dinheiro, no mesmo período, sem aportes extras, em quatro curvas: Barracuda (simulação v28, custos da Hyperliquid), Arowana (v28 + breakeven), Cat Fish (histórico de operações, sem código próprio — ver a aba Cat Fish) e BTC à vista comprado e segurado (sem custos). O Cat Fish só tem dados a partir de agosto de 2026; antes disso a linha dele fica parada no início. As curvas do robô foram ajustadas olhando este mesmo período; a do BTC é preço.": "El mismo dinero, en el mismo período, sin aportes extra, en cuatro curvas: Barracuda (simulación v28, costos de Hyperliquid), Arowana (v28 + breakeven), Cat Fish (historial de operaciones, sin código propio — ver la pestaña Cat Fish) y BTC spot comprado y mantenido (sin costos). Cat Fish solo tiene datos desde agosto de 2026; antes de eso su línea queda plana al inicio. Las curvas del robot se ajustaron mirando este mismo período; la del BTC es precio.",
   "O Cat Fish só tem dados a partir de agosto de 2026 (histórico de operações, não simulação de patrimônio — ver a aba Cat Fish); antes disso a linha dele fica parada no início.": "Cat Fish solo tiene datos desde agosto de 2026 (historial de operaciones, no una simulación de patrimonio — ver la pestaña Cat Fish); antes de eso su línea queda plana al inicio.",
@@ -816,8 +804,8 @@ es: {
   "Quando a operação anda o gatilho a favor (máxima ou mínima do candle), o stop vai para a entrada + 0,3R a partir do candle seguinte. O stop móvel pela onda continua igual. Simulação das duas regras no mesmo período.": "Cuando la operación avanza el gatillo a favor (máximo o mínimo de la vela), el stop pasa a la entrada + 0,3R a partir de la vela siguiente. El stop móvil por la onda sigue igual. Simulación de las dos reglas en el mismo período.",
   "Arowana: gatilho do breakeven": "Arowana: gatillo del breakeven", "Comparação no período": "Comparación en el período",
 }};
-TR.en[NOTA_BAR.replace("regras do robô Barracuda (v28)", ARO_PT)] = TR.en[NOTA_BAR].replace("Barracuda bot rules (v28)", "Arowana bot rules (v29: Barracuda's rules plus a breakeven — once a trade moves 1R in its favor, the stop goes to entry + 0.3R from the next candle on)");
-TR.es[NOTA_BAR.replace("regras do robô Barracuda (v28)", ARO_PT)] = TR.es[NOTA_BAR].replace("reglas del robot Barracuda (v28)", "reglas del robot Arowana (v29: las mismas de Barracuda más un breakeven — cuando la operación avanza 1R a favor, el stop pasa a la entrada + 0,3R a partir de la vela siguiente)");
+TR.en[NOTA_BAR.replace("regras do robô Barracuda (v28)", ARO_PT)] = TR.en[NOTA_BAR].replace("Barracuda bot rules (v28)", "Arowana bot rules (v29: Barracuda's rules plus an additional profit-protection rule)");
+TR.es[NOTA_BAR.replace("regras do robô Barracuda (v28)", ARO_PT)] = TR.es[NOTA_BAR].replace("reglas del robot Barracuda (v28)", "reglas del robot Arowana (v29: las mismas de Barracuda más una regla adicional de protección de la ganancia)");
 MES = MESES[LANG];
 Object.assign(TR.en, {"Histórico Black River": "Black River Track Record", "claro": "light", "escuro": "dark", "Patrimônio simulado ao longo do tempo": "Simulated equity over time", "início do período": "period start", "fim do período": "period end", "Robô e BTC no período": "Bot and BTC in the period", "Barracuda e Arowana no período": "Barracuda and Arowana in the period", "Resultados": "Results", "Carregando…": "Loading…", "operações": "trades", "Sem candles para este mês.": "No candles for this month.", "saída": "exit", "fechar": "close"});
 Object.assign(TR.es, {"Histórico Black River": "Historial Black River", "claro": "claro", "escuro": "oscuro", "Patrimônio simulado ao longo do tempo": "Patrimonio simulado a lo largo del tiempo", "início do período": "inicio del período", "fim do período": "fin del período", "Robô e BTC no período": "Robot y BTC en el período", "Barracuda e Arowana no período": "Barracuda y Arowana en el período", "Resultados": "Resultados", "Carregando…": "Cargando…", "operações": "operaciones", "Sem candles para este mês.": "Sin velas para este mes.", "saída": "salida", "fechar": "cerrar"});
