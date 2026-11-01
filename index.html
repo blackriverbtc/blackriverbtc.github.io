@@ -34,7 +34,7 @@ select{font:13px var(--ui);padding:5px 8px;border:1px solid var(--line);border-r
 .card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 14px;min-width:0}
 .chartwrap{position:relative;margin-top:12px}
 svg text{fill:var(--mut);font-family:var(--mono);font-size:11px}
-#tip,#bTip,#cTip,#bDDTip,#cDDTip{position:absolute;top:8px;left:8px;display:none;pointer-events:none;background:var(--card);border:1px solid var(--line);border-radius:6px;padding:7px 10px;font-size:12.5px;max-width:300px;box-shadow:0 2px 8px rgba(0,0,0,.12);z-index:2}
+#tip,#bTip,#cTip{position:absolute;top:8px;left:8px;display:none;pointer-events:none;background:var(--card);border:1px solid var(--line);border-radius:6px;padding:7px 10px;font-size:12.5px;max-width:300px;box-shadow:0 2px 8px rgba(0,0,0,.12);z-index:2}
 #tip .big{font-size:16px;font-weight:600;color:var(--fg)}
 #pop{position:absolute;display:none;background:var(--card);border:1px solid var(--acc);border-radius:8px;padding:10px 12px;font-size:13px;box-shadow:0 4px 14px rgba(0,0,0,.14);z-index:3;min-width:240px}
 #pop .row{display:flex;gap:8px;align-items:center;margin-top:8px}
@@ -91,7 +91,7 @@ input[type=checkbox]{accent-color:var(--acc);width:15px;height:15px}
     <div class="seg" id="lang" title="Idioma / Language / Idioma" style="font-size:15px"><button data-l="pt" class="on" aria-label="Português">🇧🇷</button><button data-l="en" aria-label="English">🇺🇸</button><button data-l="es" aria-label="Español">🇪🇸</button></div>
   </div>
 </header>
-<nav class="tabs" role="tablist"><button class="on" data-tab="sim" role="tab" aria-selected="true">Barracuda</button><button data-tab="aro" role="tab" aria-selected="false">Arowana</button><button data-tab="catfish" role="tab" aria-selected="false">Cat Fish</button><button data-tab="v29" role="tab" aria-selected="false">Barracuda vs Arowana</button><button data-tab="btc" role="tab" aria-selected="false">Barracuda vs BTC</button></nav>
+<nav class="tabs" role="tablist"><button class="on" data-tab="sim" role="tab" aria-selected="true">Barracuda</button><button data-tab="aro" role="tab" aria-selected="false">Arowana</button><button data-tab="catfish" role="tab" aria-selected="false">Cat Fish</button><button data-tab="v29" role="tab" aria-selected="false">Barracuda vs Arowana vs Cat Fish</button><button data-tab="btc" role="tab" aria-selected="false">Barracuda/Arowana/Cat Fish vs BTC</button></nav>
 <div id="tab-sim">
 
 <section class="card" style="margin-top:14px">
@@ -151,6 +151,7 @@ input[type=checkbox]{accent-color:var(--acc);width:15px;height:15px}
 <h2 style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span>Resultados</span><span class="rm-pill" id="resTit"></span><button class="btn" id="resX" style="margin-left:auto" aria-label="fechar">✕</button></h2>
 <div class="card rm-split"><div class="rm-lista"><table id="resLista"></table></div><div style="min-width:0"><div class="rm-hdr" id="resHdr"></div><div class="rm-a" id="resA"></div><div style="display:flex;gap:6px;margin-top:8px"><button class="btn" id="resPrev">‹</button><button class="btn" id="resNext">›</button></div></div></div>
 <div class="rm-grid" id="resB" style="margin-top:10px"></div>
+<div class="rm-tip" id="resBTip"></div>
 <div class="card chartwrap rm-c" style="margin-top:10px" id="resC"></div>
 </section>
 
@@ -225,11 +226,6 @@ input[type=checkbox]{accent-color:var(--acc);width:15px;height:15px}
   </div>
   <p class="note" style="margin:6px 0 0">Arraste as bolinhas (ou escolha as datas) para mudar o período; o aporte entra na data de início.</p>
 </section>
-<section class="card chartwrap" style="margin-top:10px">
-  <b>Queda desde o pico</b>
-  <div id="bDD" style="margin-top:6px"></div>
-  <div id="bDDTip"></div>
-</section>
 <p class="note" style="margin-top:10px">O mesmo dinheiro, no mesmo período, sem aportes extras, em quatro curvas: Barracuda (simulação v28, custos da Hyperliquid), Arowana (v28 + breakeven), Cat Fish (histórico de operações, sem código próprio — ver a aba Cat Fish) e BTC à vista comprado e segurado (sem custos). O Cat Fish só tem dados a partir de agosto de 2026; antes disso a linha dele fica parada no início. As curvas do robô foram ajustadas olhando este mesmo período; a do BTC é preço.</p>
 </div>
 
@@ -242,8 +238,6 @@ input[type=checkbox]{accent-color:var(--acc);width:15px;height:15px}
     <span class="mut" id="cInfo" style="font-size:12.5px"></span>
   </div>
 </section>
-<h2>Comparação no período</h2>
-<div class="card tw"><table id="cTab"></table></div>
 <section class="card chartwrap">
   <div><b>Evolução</b> <span class="mut">· <span style="color:var(--acc)">■</span> Barracuda · <span style="color:var(--pos)">■</span> Arowana · <span style="color:var(--cat)">■</span> Cat Fish</span></div>
   <div id="cChart" style="margin-top:6px"></div>
@@ -254,12 +248,9 @@ input[type=checkbox]{accent-color:var(--acc);width:15px;height:15px}
     <input type="date" id="cAte"><button class="btn" id="cTudo">tudo</button>
   </div>
 </section>
-<section class="card chartwrap" style="margin-top:10px">
-  <b>Queda desde o pico</b>
-  <div id="cDD" style="margin-top:6px"></div>
-  <div id="cDDTip"></div>
-</section>
 <p class="note" style="margin-top:4px">O Cat Fish só tem dados a partir de agosto de 2026 (histórico de operações, não simulação de patrimônio — ver a aba Cat Fish); antes disso a linha dele fica parada no início.</p>
+<h2>Comparação no período</h2>
+<div class="card tw"><table id="cTab"></table></div>
 <h2>Ano a ano</h2>
 <div class="card tw"><table id="cAnos"></table></div>
 </div>
@@ -325,27 +316,6 @@ function chartMulti(series, x0, x1, scale, ciclosOn, elChart, elTip, crossId, ar
   });
   svg.addEventListener("mouseleave", () => { elTip.style.display = "none"; cx.setAttribute("visibility", "hidden"); });
 }
-function chartDD(series, x0, x1, elChart, elTip, crossId) {
-  const W = 1100, H = 130, L = 74, Rt = 16, T = 10, Bt = 22;
-  const ddSeries = series.map(s => { let pk = -Infinity; return {...s, C: s.C.map(([t, v]) => { pk = Math.max(pk, v); return [t, (v / pk - 1) * 100]; })}; });
-  const lo = Math.min(-1, ...ddSeries.flatMap(s => s.C.map(p => p[1])));
-  const Y = v => T + (0 - v) / (0 - lo) * (H - T - Bt);
-  const X = t => L + (t - x0) / (x1 - x0 || 1) * (W - L - Rt);
-  const step = -lo > 50 ? 20 : -lo > 20 ? 10 : 5; let ticks = [0]; for (let v = -step; v >= lo; v -= step) ticks.push(v);
-  let g = ticks.map(v => `<line x1="${L}" x2="${W - Rt}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" stroke="var(--grid)"/><text x="${L - 6}" y="${(Y(v) + 3).toFixed(1)}" text-anchor="end">${Math.round(v)}%</text>`).join("");
-  const path = (C, cor) => `<path d="${C.map((p, i) => (i ? "L" : "M") + X(p[0]).toFixed(1) + "," + Y(p[1]).toFixed(1)).join("")}" fill="none" stroke="${cor}" stroke-width="1.5" stroke-linejoin="round"/>`;
-  g += ddSeries.map(s => path(s.C, s.cor)).join("");
-  g += `<line id="${crossId}" x1="0" x2="0" y1="${T}" y2="${H - Bt}" stroke="var(--cross)" visibility="hidden"/><rect x="${L}" y="${T}" width="${W - L - Rt}" height="${H - T - Bt}" fill="transparent"/>`;
-  elChart.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${tx("Queda desde o pico")}">${g}</svg>`;
-  const svg = elChart.querySelector("svg"), cx = document.getElementById(crossId);
-  svg.addEventListener("mousemove", e => {
-    const r = svg.getBoundingClientRect(), sx = W / r.width, px = (e.clientX - r.left) * sx, t = x0 + (px - L) / (W - L - Rt) * (x1 - x0);
-    cx.setAttribute("x1", px.toFixed(1)); cx.setAttribute("x2", px.toFixed(1)); cx.setAttribute("visibility", "visible");
-    elTip.innerHTML = `<div class="mut">${dia(t)}</div>` + ddSeries.map(s => `<div class="num"><span style="color:${s.cor}">■</span> ${s.nome} ${fmtPct(at(s.C, t), 1)}</div>`).join("");
-    elTip.style.display = "block"; const left = px / sx + 14; elTip.style.left = (left + elTip.offsetWidth > r.width ? px / sx - elTip.offsetWidth - 14 : left) + "px"; elTip.style.top = "8px";
-  });
-  svg.addEventListener("mouseleave", () => { elTip.style.display = "none"; cx.setAttribute("visibility", "hidden"); });
-}
 let bIni = 0, bFim = 0;
 function bootB() {
   bIni = Math.max(D.inicio, BTC[0][0]); bFim = Math.min(D.fim, BTC[BTC.length - 1][0]);
@@ -380,7 +350,6 @@ function renderB() {
   $("bTiles").innerHTML = series.map(card).join("");
   $("bInfo").textContent = `${dia(bDe)} → ${dia(bAte)} · ${Math.round(dias)} ${tx("dias")}`;
   chartMulti(series, bDe, bAte, bScale, bCiclosOn, $("bChart"), $("bTip"), "bcx", tx("Barracuda, Arowana, Cat Fish e BTC no período"));
-  chartDD(series, bDe, bAte, $("bDD"), $("bDDTip"), "bddcx");
 }
 // ---- Aba V28 × V29: mesma banca, mesmo período; V29 = breakeven (dash_v29.json, variantes por gatilho)
 let V29 = null, cDe = 0, cAte = 0, cScale = "log", cIni = 0, cFim = 0;
@@ -430,7 +399,6 @@ function renderC() {
   $("cTab").innerHTML = `<tr><th></th><th class="n">Barracuda (v28)</th><th class="n">Arowana (v29)</th><th class="n">Arowana − Barracuda</th><th class="n">Cat Fish</th></tr>` + rows.map(r => `<tr><td>${r[0]}</td><td class="n">${r[1]}</td><td class="n">${r[2]}</td>${r[3]}<td class="n">${r[4]}</td></tr>`).join("");
   const series = [{nome: "Barracuda", cor: "var(--acc)", C: A.C}, {nome: "Arowana", cor: "var(--pos)", C: B.C}, ...(CATFISH_CURVA ? [{nome: "Cat Fish", cor: "var(--cat)", C: Cf.C}] : [])];
   chartMulti(series, cDe, cAte, cScale, false, $("cChart"), $("cTip"), "ccx", tx("Barracuda, Arowana e Cat Fish no período"));
-  chartDD(series, cDe, cAte, $("cDD"), $("cDDTip"), "cddcx");
   anosC(v, cap);
 }
 function anosC(v, cap) {
@@ -756,6 +724,18 @@ function rmSel(i) { rm.i = i; renderRM(); }
 $("resC").addEventListener("click", e => { const r = e.target.closest("rect[data-i]"); if (r) { rmSel(+r.dataset.i); $("resA").scrollIntoView({behavior: "smooth", block: "center"}); } });
 $("resLista").addEventListener("click", e => { const tr = e.target.closest("tr[data-i]"); if (tr) rmSel(+tr.dataset.i); });
 $("resB").addEventListener("click", e => { const m = e.target.closest(".rm-mini"); if (m) { rmSel(+m.dataset.i); $("resA").scrollIntoView({behavior: "smooth", block: "center"}); } });
+$("resB").addEventListener("mousemove", e => {
+  const card = e.target.closest(".rm-mini"), tipEl = $("resBTip");
+  const p = card && rm ? rm.ops[+card.dataset.i] : null;
+  if (!p) { tipEl.style.display = "none"; return; }
+  tipEl.innerHTML = `<b>${p.moeda}</b> <span class="mut">${p.conta}</span><br>${rmLado(p)} ${p.preco_entrada} · ${dh(p.entrada)} UTC<br>${tx("saída")} ${p.preco_saida} · ${dh(p.saida)} UTC<br><span class="${p.R > 0 ? "pos" : "neg"}">${rmR(p)} · ${rmP(p)}</span>`;
+  const W = 270, vw = window.innerWidth, vh = window.innerHeight;
+  let x = e.clientX + 14, y = e.clientY + 14;
+  if (x + W > vw) x = e.clientX - W - 14;
+  if (y + 100 > vh) y = e.clientY - 100;
+  tipEl.style.left = x + "px"; tipEl.style.top = y + "px"; tipEl.style.display = "block";
+});
+$("resB").addEventListener("mouseleave", () => { $("resBTip").style.display = "none"; });
 $("resPrev").addEventListener("click", () => rmSel((rm.i + rm.ops.length - 1) % rm.ops.length));
 $("resNext").addEventListener("click", () => rmSel((rm.i + 1) % rm.ops.length));
 $("resX").addEventListener("click", () => { $("resMes").hidden = true; });
@@ -797,7 +777,9 @@ en: {
   "Como ler estes números": "How to read these numbers", "Simulação, não resultado real.": "Simulation, not real results.",
   [NOTA_BAR]: "The curve applies the Barracuda bot rules (v28) to Binance spot prices from 11 May 2020 onward, with Hyperliquid fees (maker 0.015%, taker 0.045%), 0.02% slippage and a fixed 5% yearly funding. Equity is marked to market at each candle close. The rules were chosen looking at this same period: future performance tends to be lower, and the drawdown to expect is 30–50%, not the historical one. The bot has traded real money since 27 Sep 2026; this page shows only the simulation.",
   "Aporte US$": "Deposit US$", "Evolução": "Evolution", "BTC comprado e segurado": "BTC bought and held", "Arraste as bolinhas (ou escolha as datas) para mudar o período; o aporte entra na data de início.": "Drag the handles (or pick the dates) to change the period; the deposit goes in on the start date.",
-  "O mesmo dinheiro, no mesmo período, sem aportes extras: no Barracuda (simulação v28, custos da Hyperliquid) ou comprando BTC à vista e segurando (sem custos). A curva do robô foi ajustada olhando este mesmo período; a do BTC é preço.": "The same money, over the same period, with no extra deposits: in Barracuda (v28 simulation, Hyperliquid costs) or buying spot BTC and holding (no costs). The bot curve was tuned looking at this same period; the BTC curve is just price.",
+  "O mesmo dinheiro, no mesmo período, sem aportes extras, em quatro curvas: Barracuda (simulação v28, custos da Hyperliquid), Arowana (v28 + breakeven), Cat Fish (histórico de operações, sem código próprio — ver a aba Cat Fish) e BTC à vista comprado e segurado (sem custos). O Cat Fish só tem dados a partir de agosto de 2026; antes disso a linha dele fica parada no início. As curvas do robô foram ajustadas olhando este mesmo período; a do BTC é preço.": "The same money, over the same period, with no extra deposits, in four curves: Barracuda (v28 simulation, Hyperliquid costs), Arowana (v28 + breakeven), Cat Fish (trade history, no code of its own — see the Cat Fish tab) and spot BTC bought and held (no costs). Cat Fish only has data from August 2026 on; before that its line stays flat at the start. The bot curves were tuned looking at this same period; the BTC curve is just price.",
+  "O Cat Fish só tem dados a partir de agosto de 2026 (histórico de operações, não simulação de patrimônio — ver a aba Cat Fish); antes disso a linha dele fica parada no início.": "Cat Fish only has data from August 2026 on (trade history, not an equity simulation — see the Cat Fish tab); before that its line stays flat at the start.",
+  "Barracuda, Arowana, Cat Fish e BTC no período": "Barracuda, Arowana, Cat Fish and BTC in the period", "Barracuda, Arowana e Cat Fish no período": "Barracuda, Arowana and Cat Fish in the period",
   "Quando a operação anda o gatilho a favor (máxima ou mínima do candle), o stop vai para a entrada + 0,3R a partir do candle seguinte. O stop móvel pela onda continua igual. Simulação das duas regras no mesmo período.": "Once a trade moves the trigger distance in its favor (candle high or low), the stop goes to entry + 0.3R from the next candle on. The wave trailing stop stays the same. Simulation of both rules over the same period.",
   "Arowana: gatilho do breakeven": "Arowana: breakeven trigger", "Comparação no período": "Comparison in period",
 },
@@ -827,7 +809,9 @@ es: {
   "Como ler estes números": "Cómo leer estos números", "Simulação, não resultado real.": "Simulación, no resultado real.",
   [NOTA_BAR]: "La curva aplica las reglas del robot Barracuda (v28) a precios spot de Binance desde el 11/05/2020, con comisiones de Hyperliquid (maker 0,015%, taker 0,045%), deslizamiento de 0,02% y funding fijo de 5% anual. El patrimonio se valora a mercado al cierre de cada vela. Las reglas se eligieron mirando este mismo período: el desempeño futuro tiende a ser menor, y la caída a esperar es de 30–50%, no la histórica. El robot opera dinero real desde el 27/09/2026; esta página muestra solo lo simulado.",
   "Aporte US$": "Aporte US$", "Evolução": "Evolución", "BTC comprado e segurado": "BTC comprado y mantenido", "Arraste as bolinhas (ou escolha as datas) para mudar o período; o aporte entra na data de início.": "Arrastre los controles (o elija las fechas) para cambiar el período; el aporte entra en la fecha de inicio.",
-  "O mesmo dinheiro, no mesmo período, sem aportes extras: no Barracuda (simulação v28, custos da Hyperliquid) ou comprando BTC à vista e segurando (sem custos). A curva do robô foi ajustada olhando este mesmo período; a do BTC é preço.": "El mismo dinero, en el mismo período, sin aportes extra: en Barracuda (simulación v28, costos de Hyperliquid) o comprando BTC spot y manteniéndolo (sin costos). La curva del robot se ajustó mirando este mismo período; la del BTC es precio.",
+  "O mesmo dinheiro, no mesmo período, sem aportes extras, em quatro curvas: Barracuda (simulação v28, custos da Hyperliquid), Arowana (v28 + breakeven), Cat Fish (histórico de operações, sem código próprio — ver a aba Cat Fish) e BTC à vista comprado e segurado (sem custos). O Cat Fish só tem dados a partir de agosto de 2026; antes disso a linha dele fica parada no início. As curvas do robô foram ajustadas olhando este mesmo período; a do BTC é preço.": "El mismo dinero, en el mismo período, sin aportes extra, en cuatro curvas: Barracuda (simulación v28, costos de Hyperliquid), Arowana (v28 + breakeven), Cat Fish (historial de operaciones, sin código propio — ver la pestaña Cat Fish) y BTC spot comprado y mantenido (sin costos). Cat Fish solo tiene datos desde agosto de 2026; antes de eso su línea queda plana al inicio. Las curvas del robot se ajustaron mirando este mismo período; la del BTC es precio.",
+  "O Cat Fish só tem dados a partir de agosto de 2026 (histórico de operações, não simulação de patrimônio — ver a aba Cat Fish); antes disso a linha dele fica parada no início.": "Cat Fish solo tiene datos desde agosto de 2026 (historial de operaciones, no una simulación de patrimonio — ver la pestaña Cat Fish); antes de eso su línea queda plana al inicio.",
+  "Barracuda, Arowana, Cat Fish e BTC no período": "Barracuda, Arowana, Cat Fish y BTC en el período", "Barracuda, Arowana e Cat Fish no período": "Barracuda, Arowana y Cat Fish en el período",
   "Quando a operação anda o gatilho a favor (máxima ou mínima do candle), o stop vai para a entrada + 0,3R a partir do candle seguinte. O stop móvel pela onda continua igual. Simulação das duas regras no mesmo período.": "Cuando la operación avanza el gatillo a favor (máximo o mínimo de la vela), el stop pasa a la entrada + 0,3R a partir de la vela siguiente. El stop móvil por la onda sigue igual. Simulación de las dos reglas en el mismo período.",
   "Arowana: gatilho do breakeven": "Arowana: gatillo del breakeven", "Comparação no período": "Comparación en el período",
 }};
