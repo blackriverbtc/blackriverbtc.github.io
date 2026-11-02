@@ -63,9 +63,12 @@ th.n,td.n{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-
 .lg{background:var(--pos-soft);color:var(--pos)}.sh{background:var(--neg-soft);color:var(--neg)}
 input[type=checkbox]{accent-color:var(--acc);width:15px;height:15px}
 :root{--btc:#d9822b;--cat:#0f766e}@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--btc:#e9a05a;--cat:#4fd1c5}}:root[data-theme="dark"]{--btc:#e9a05a;--cat:#4fd1c5}
-.tabs{display:flex;gap:4px;margin-top:16px;border-bottom:1px solid var(--line)}
-.tabs button{font:17px var(--ui);padding:10px 18px;border:0;border-bottom:3px solid transparent;background:none;color:var(--mut);cursor:pointer;margin-bottom:-1px}
+.tabswrap{margin-top:16px}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{font:17px var(--ui);padding:10px 18px;border:0;border-bottom:3px solid transparent;background:none;color:var(--mut);cursor:pointer;margin-bottom:-1px;white-space:nowrap;flex:0 0 auto}
 .tabs button.on{color:var(--fg);border-bottom-color:var(--acc);font-weight:500}
+.tabs.sub button{font-size:14.5px;padding:8px 18px}
 .tabs button[data-tab="sim"],.tabs button[data-tab="aro"],.tabs button[data-tab="catfish"],.tabs button.on[data-tab="sim"],.tabs button.on[data-tab="aro"],.tabs button.on[data-tab="catfish"]{color:var(--btc)}
 .tile.b{border-top:3px solid var(--btc)}.tile.r{border-top:3px solid var(--acc)}.tile.aro{border-top:3px solid var(--pos)}.tile.cat{border-top:3px solid var(--cat)}
 #meses th{text-align:center;padding:6px 4px}#meses td{padding:0;text-align:center}#meses td.y{text-align:left;padding:6px 8px;font-weight:500}
@@ -99,7 +102,10 @@ input[type=checkbox]{accent-color:var(--acc);width:15px;height:15px}
     <div class="seg" id="lang" title="Idioma / Language / Idioma" style="font-size:15px"><button data-l="pt" class="on" aria-label="Português">🇧🇷</button><button data-l="en" aria-label="English">🇺🇸</button><button data-l="es" aria-label="Español">🇪🇸</button></div>
   </div>
 </header>
-<nav class="tabs" role="tablist"><button class="on" data-tab="sim" role="tab" aria-selected="true">Barracuda</button><button data-tab="aro" role="tab" aria-selected="false">Arowana</button><button data-tab="catfish" role="tab" aria-selected="false">Cat Fish</button><button data-tab="v29" role="tab" aria-selected="false">Barracuda vs Arowana vs Cat Fish</button><button data-tab="btc" role="tab" aria-selected="false">Barracuda/Arowana/Cat Fish vs BTC</button></nav>
+<div class="tabswrap" role="tablist">
+<nav class="tabs"><button class="on" data-tab="sim" role="tab" aria-selected="true">Barracuda</button><button data-tab="aro" role="tab" aria-selected="false">Arowana</button><button data-tab="catfish" role="tab" aria-selected="false">Cat Fish</button></nav>
+<nav class="tabs sub"><button data-tab="v29" role="tab" aria-selected="false">3 Robôs</button><button data-tab="btc" role="tab" aria-selected="false">Robôs x BTC</button></nav>
+</div>
 <div id="tab-sim">
 
 <section class="card" style="margin-top:14px">
@@ -166,8 +172,6 @@ input[type=checkbox]{accent-color:var(--acc);width:15px;height:15px}
 <h2>Ano a ano</h2>
 <div class="card tw"><table id="anos"></table></div>
 
-<h2>Como ler estes números</h2>
-<p class="note"><b>Simulação, não resultado real.</b> A curva aplica as regras do robô Barracuda (v28) a preços à vista da Binance de 11/05/2020 em diante, já com os custos de operar na Hyperliquid incluídos. O patrimônio é marcado a mercado no fechamento de cada candle. As regras foram escolhidas olhando o mesmo período: o desempenho futuro tende a ser menor, e a queda a esperar é de 30–50%, não a histórica. O robô opera dinheiro real desde 27/09/2026; a versão deste painel mostra só o simulado. <span id="gerado"></span></p>
 </div>
 
 <div id="tab-aro" hidden></div>
@@ -199,8 +203,6 @@ input[type=checkbox]{accent-color:var(--acc);width:15px;height:15px}
 <div class="card tw" style="margin-top:10px"><table id="catResLista"></table></div>
 </section>
 
-<h2>Como ler estes números</h2>
-<p class="note"><b>Histórico de operações, não simulação de patrimônio.</b> Cada operação mostra o resultado que ela mesma deu, independente do tamanho dela. A fase <b>Binance Spot</b> (05/08 a 23/10/2026) está encerrada, dados digitados das planilhas de registro. A fase <b>Hyperliquid Spot</b> (ao vivo desde 31/10/2026, carteira pública 0xcAC1…9251) atualiza sozinha todo dia. A caixa "Simular com" é só um jeito de ver isso em dólar: aplica o retorno % de cada operação, em sequência, sobre o valor que você escolher — não é o tamanho real usado em cada operação (que varia de uma para outra). Sem preço de stop ou alvo registrado nas operações, então os quadros de candle mostram só entrada e saída.</p>
 </div>
 
 <div id="tab-btc" hidden>
@@ -454,7 +456,6 @@ function gerarAP() {
 function init() {
   D.T = D.trades.map(t => Object.fromEntries(D.colunas.map((c, i) => [c, t[i]])));
   D.cT = D.curva.map(p => p[0]); D.cV = D.curva.map(p => p[1]);
-  $("gerado").textContent = TX`Dados até ${dia(D.fim)}; gerado em ${D.gerado}.`;
   const m1 = Math.min(Math.max(D.inicio, anoAtualIni()), D.fim - DIA);   // site sempre abre em 1º de janeiro (Felipe 01/11/2026)
   $("dIni").min = iso(D.inicio); $("dIni").max = iso(D.fim); $("dIni").value = iso(m1);
   aportes = [{t: m1, v: 1000}];
@@ -728,7 +729,7 @@ $("resB").addEventListener("mouseleave", () => { $("resBTip").style.display = "n
 $("resPrev").addEventListener("click", () => rmSel((rm.i + rm.ops.length - 1) % rm.ops.length));
 $("resNext").addEventListener("click", () => rmSel((rm.i + 1) % rm.ops.length));
 $("resX").addEventListener("click", () => { $("resMes").hidden = true; });
-  function rerender() { gerarAP(); renderAportes(); render(); meses(); if (rm && !$("resMes").hidden) abrirMes(rm.y, rm.m); if (D.fim) $("gerado").textContent = TX`Dados até ${dia(D.fim)}; gerado em ${D.gerado}.`; }
+  function rerender() { gerarAP(); renderAportes(); render(); meses(); if (rm && !$("resMes").hidden) abrirMes(rm.y, rm.m); }
   return {init, rerender};
 }
 const MESES = {pt: ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"], en: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"], es: ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"]};
@@ -807,14 +808,14 @@ es: {
 TR.en[NOTA_BAR.replace("regras do robô Barracuda (v28)", ARO_PT)] = TR.en[NOTA_BAR].replace("Barracuda bot rules (v28)", "Arowana bot rules (v29: Barracuda's rules plus an additional profit-protection rule)");
 TR.es[NOTA_BAR.replace("regras do robô Barracuda (v28)", ARO_PT)] = TR.es[NOTA_BAR].replace("reglas del robot Barracuda (v28)", "reglas del robot Arowana (v29: las mismas de Barracuda más una regla adicional de protección de la ganancia)");
 MES = MESES[LANG];
-Object.assign(TR.en, {"Histórico Black River": "Black River Track Record", "claro": "light", "escuro": "dark", "Patrimônio simulado ao longo do tempo": "Simulated equity over time", "início do período": "period start", "fim do período": "period end", "Robô e BTC no período": "Bot and BTC in the period", "Barracuda e Arowana no período": "Barracuda and Arowana in the period", "Resultados": "Results", "Carregando…": "Loading…", "operações": "trades", "Sem candles para este mês.": "No candles for this month.", "saída": "exit", "fechar": "close"});
-Object.assign(TR.es, {"Histórico Black River": "Historial Black River", "claro": "claro", "escuro": "oscuro", "Patrimônio simulado ao longo do tempo": "Patrimonio simulado a lo largo del tiempo", "início do período": "inicio del período", "fim do período": "fin del período", "Robô e BTC no período": "Robot y BTC en el período", "Barracuda e Arowana no período": "Barracuda y Arowana en el período", "Resultados": "Resultados", "Carregando…": "Cargando…", "operações": "operaciones", "Sem candles para este mês.": "Sin velas para este mes.", "saída": "salida", "fechar": "cerrar"});
+Object.assign(TR.en, {"Histórico Black River": "Black River Track Record", "claro": "light", "escuro": "dark", "Patrimônio simulado ao longo do tempo": "Simulated equity over time", "início do período": "period start", "fim do período": "period end", "Robô e BTC no período": "Bot and BTC in the period", "Barracuda e Arowana no período": "Barracuda and Arowana in the period", "3 Robôs": "3 Bots", "Robôs x BTC": "Bots x BTC", "Resultados": "Results", "Carregando…": "Loading…", "operações": "trades", "Sem candles para este mês.": "No candles for this month.", "saída": "exit", "fechar": "close"});
+Object.assign(TR.es, {"Histórico Black River": "Historial Black River", "claro": "claro", "escuro": "oscuro", "Patrimônio simulado ao longo do tempo": "Patrimonio simulado a lo largo del tiempo", "início do período": "inicio del período", "fim do período": "fin del período", "Robô e BTC no período": "Robot y BTC en el período", "Barracuda e Arowana no período": "Barracuda y Arowana en el período", "3 Robôs": "3 Robots", "Robôs x BTC": "Robots x BTC", "Resultados": "Resultados", "Carregando…": "Cargando…", "operações": "operaciones", "Sem candles para este mês.": "Sin velas para este mes.", "saída": "salida", "fechar": "cerrar"});
 const tx = s => LANG === "pt" ? s : (TR[LANG][s] ?? s);
 const TX = (strs, ...vals) => tx(strs.reduce((acc, p, i) => acc + (i ? `{${i - 1}}` : "") + p, "")).replace(/\{(\d+)\}/g, (_, k) => vals[+k]);
 const MODS = [];
 function temaAtual() { return document.documentElement.dataset.theme || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"); }
 function marcaTema() { [...$("tema").children].forEach(b => b.classList.toggle("on", b.dataset.t === temaAtual())); }
-try { const t = localStorage.getItem("tema"); if (t === "dark" || t === "light") document.documentElement.dataset.theme = t; } catch (e) {}
+try { const t = localStorage.getItem("tema"); document.documentElement.dataset.theme = (t === "dark" || t === "light") ? t : "dark"; } catch (e) { document.documentElement.dataset.theme = "dark"; }
 marcaTema(); try { matchMedia("(prefers-color-scheme: dark)").addEventListener("change", marcaTema); } catch (e) {}
 $("tema").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; document.documentElement.dataset.theme = b.dataset.t; try { localStorage.setItem("tema", b.dataset.t); } catch (e2) {} marcaTema(); });
 function traduzDOM() {
@@ -830,7 +831,7 @@ let D = null;   // dados do Barracuda (v28); as abas de comparação usam este
 const HIST_HTML = document.getElementById("tab-sim").innerHTML;
 document.getElementById("tab-aro").innerHTML = HIST_HTML.replace(/ for="[^"]*"/g, "").replace("regras do robô Barracuda (v28)", "regras do robô Arowana (v29: as mesmas do Barracuda mais um breakeven — quando a operação anda 1R a favor, o stop vai para a entrada + 0,3R a partir do candle seguinte)");
 traduzDOM();
-document.querySelector(".tabs").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return;
+document.querySelector(".tabswrap").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return;
   document.querySelectorAll(".tabs button").forEach(x => { const on = x === b; x.classList.toggle("on", on); x.setAttribute("aria-selected", on); });
   ["sim", "aro", "catfish", "v29", "btc"].forEach(k => { document.getElementById("tab-" + k).hidden = b.dataset.tab !== k; }); });
 // ---- Aba Cat Fish: histórico de operações (não simulação de patrimônio) das duas fases — Binance Spot
