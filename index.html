@@ -322,7 +322,7 @@ function bootB() {
   bIni = Math.max(D.inicio, BTC[0][0]); bFim = Math.min(D.fim, BTC[BTC.length - 1][0]);
   ["bDe", "bAte"].forEach(id => { $(id).min = iso(bIni); $(id).max = iso(bFim); });
   const nd = Math.ceil((bFim - bIni) / DIA); $("bRA").max = nd; $("bRB").max = nd;
-  setPerB(anoAtualIni(), bFim);
+  setPerB(bIni, bFim);   // aba de comparação: sempre abre desde o início, diferente das abas dos robôs (Felipe 02/11/2026)
 }
 function setPerB(a, b) {
   a = Math.max(bIni, Math.min(a, bFim - DIA)); b = Math.max(a + DIA, Math.min(b, bFim)); bDe = a; bAte = b;
@@ -376,7 +376,7 @@ function statsCatfish(curva, trades, a, b, cap) {
 }
 function bootC() {
   cIni = D.inicio; cFim = D.fim; ["cDe", "cAte"].forEach(id => { $(id).min = iso(cIni); $(id).max = iso(cFim); });
-  const nd = Math.ceil((cFim - cIni) / DIA); $("cRA").max = nd; $("cRB").max = nd; setPerC(anoAtualIni(), cFim);
+  const nd = Math.ceil((cFim - cIni) / DIA); $("cRA").max = nd; $("cRB").max = nd; setPerC(cIni, cFim);   // aba de comparação: sempre abre desde o início (Felipe 02/11/2026)
 }
 function setPerC(a, b) {
   a = Math.max(cIni, Math.min(a, cFim - DIA)); b = Math.max(a + DIA, Math.min(b, cFim)); cDe = a; cAte = b;
