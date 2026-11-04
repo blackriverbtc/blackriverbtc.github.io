@@ -959,7 +959,7 @@ function CatfishHistorico(root, dados) {
         ${candleSVG(t, 170, 80, true)}
       </div>`).join("");
     $("catResLista").innerHTML = `<tr><th style="text-align:left">${tx("Ativo")}</th><th class="n">${tx("Entrada")}</th><th class="n">${tx("Saída")}</th><th class="n">${tx("Resultado")}</th></tr>` +
-      r.detail.map(t => `<tr><td><b>${t.ativo}</b> <span class="mut" style="font-size:11px">${t.fase === "l" ? "Hyperliquid" : "Binance"}</span></td><td class="n num mut">${dh(t.entrada)}</td><td class="n num mut">${dh(t.saida)}</td><td class="n num ${t.rPct >= 0 ? "pos" : "neg"}">${fmtPct(t.rPct, 1)}</td></tr>`).join("");
+      r.detail.map(t => `<tr><td><b>${t.ativo}</b> <span class="mut" style="font-size:11px">${t.fase === "l" ? "Hyperliquid" : "Binance"}${t.mercado === "perp" ? (t.lado === "short" ? " · perp short" : " · perp long") : ""}</span></td><td class="n num mut">${dh(t.entrada)}</td><td class="n num mut">${dh(t.saida)}</td><td class="n num ${t.rPct >= 0 ? "pos" : "neg"}">${fmtPct(t.rPct, 1)}</td></tr>`).join("");
   }
   $("meses").addEventListener("click", e => { const td = e.target.closest("td.m"); if (!td) return; ABERTO = ABERTO === td.dataset.mes ? null : td.dataset.mes; render(); if (ABERTO) $("catResMes").scrollIntoView({block: "nearest"}); });
   $("catResX").addEventListener("click", () => { ABERTO = null; render(); });
@@ -968,7 +968,7 @@ function CatfishHistorico(root, dados) {
     if (!card) { tip.style.display = "none"; return; }
     const t = TRADES.find(x => x.op === +card.dataset.op);
     if (!t) { tip.style.display = "none"; return; }
-    tip.innerHTML = `<b>${t.ativo}</b><br>${tx("entrada")} ${dh(t.entrada)} UTC · ${t.precoE}<br>${tx("saída")} ${dh(t.saida)} UTC · ${t.precoS}<br><span class="${t.rPct >= 0 ? "pos" : "neg"}">${fmtPct(t.rPct, 1)}</span>`;
+    tip.innerHTML = `<b>${t.ativo}</b>${t.mercado === "perp" ? ` <span class="mut">perp ${t.lado}</span>` : ""}<br>${tx("entrada")} ${dh(t.entrada)} UTC · ${t.precoE}<br>${tx("saída")} ${dh(t.saida)} UTC · ${t.precoS}<br><span class="${t.rPct >= 0 ? "pos" : "neg"}">${fmtPct(t.rPct, 1)}</span>`;
     const W = 270, vw = window.innerWidth, vh = window.innerHeight;
     let x = e.clientX + 14, y = e.clientY + 14;
     if (x + W > vw) x = e.clientX - W - 14;
