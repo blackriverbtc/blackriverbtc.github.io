@@ -805,8 +805,8 @@ es: {
 TR.en[NOTA_BAR.replace("regras do robô Barracuda (v28)", ARO_PT)] = TR.en[NOTA_BAR].replace("Barracuda bot rules (v28)", "Arowana bot rules (v29: Barracuda's rules plus an additional profit-protection rule)");
 TR.es[NOTA_BAR.replace("regras do robô Barracuda (v28)", ARO_PT)] = TR.es[NOTA_BAR].replace("reglas del robot Barracuda (v28)", "reglas del robot Arowana (v29: las mismas de Barracuda más una regla adicional de protección de la ganancia)");
 MES = MESES[LANG];
-Object.assign(TR.en, {"Histórico Black River": "Black River Track Record", "claro": "light", "escuro": "dark", "Patrimônio simulado ao longo do tempo": "Simulated equity over time", "início do período": "period start", "fim do período": "period end", "Robô e BTC no período": "Bot and BTC in the period", "Barracuda e Arowana no período": "Barracuda and Arowana in the period", "3 Robôs": "3 Bots", "Robôs x BTC": "Bots x BTC", "Resultados": "Results", "Carregando…": "Loading…", "operações": "trades", "Sem candles para este mês.": "No candles for this month.", "saída": "exit", "fechar": "close"});
-Object.assign(TR.es, {"Histórico Black River": "Historial Black River", "claro": "claro", "escuro": "oscuro", "Patrimônio simulado ao longo do tempo": "Patrimonio simulado a lo largo del tiempo", "início do período": "inicio del período", "fim do período": "fin del período", "Robô e BTC no período": "Robot y BTC en el período", "Barracuda e Arowana no período": "Barracuda y Arowana en el período", "3 Robôs": "3 Robots", "Robôs x BTC": "Robots x BTC", "Resultados": "Resultados", "Carregando…": "Cargando…", "operações": "operaciones", "Sem candles para este mês.": "Sin velas para este mes.", "saída": "salida", "fechar": "cerrar"});
+Object.assign(TR.en, {"Histórico Black River": "Black River Track Record", "claro": "light", "escuro": "dark", "Patrimônio simulado ao longo do tempo": "Simulated equity over time", "início do período": "period start", "fim do período": "period end", "Robô e BTC no período": "Bot and BTC in the period", "Barracuda e Arowana no período": "Barracuda and Arowana in the period", "3 Robôs": "3 Bots", "Robôs x BTC": "Bots x BTC", "Resultados": "Results", "Carregando…": "Loading…", "operações": "trades", "Sem candles para este mês.": "No candles for this month.", "saída": "exit", "fechar": "close", "sem stop": "no stop"});
+Object.assign(TR.es, {"Histórico Black River": "Historial Black River", "claro": "claro", "escuro": "oscuro", "Patrimônio simulado ao longo do tempo": "Patrimonio simulado a lo largo del tiempo", "início do período": "inicio del período", "fim do período": "fin del período", "Robô e BTC no período": "Robot y BTC en el período", "Barracuda e Arowana no período": "Barracuda y Arowana en el período", "3 Robôs": "3 Robots", "Robôs x BTC": "Robots x BTC", "Resultados": "Resultados", "Carregando…": "Cargando…", "operações": "operaciones", "Sem candles para este mês.": "Sin velas para este mes.", "saída": "salida", "fechar": "cerrar", "sem stop": "sin stop"});
 const tx = s => LANG === "pt" ? s : (TR[LANG][s] ?? s);
 const TX = (strs, ...vals) => tx(strs.reduce((acc, p, i) => acc + (i ? `{${i - 1}}` : "") + p, "")).replace(/\{(\d+)\}/g, (_, k) => vals[+k]);
 const MODS = [];
@@ -841,6 +841,9 @@ function CatfishHistorico(root, dados) {
   const CANDLE_SEC = 14400;
   let DMIN = 0, DMAX = 0, ABERTO = null;
   const dh = t => new Date(t * 1000).toLocaleString(LOC(), {day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", timeZone: "UTC"});
+  // resultado: em R quando o trade tem stop inicial registrado (fase Hyperliquid); senão em % (fase Binance, sem stop) — Felipe 05/11/2026
+  const fR = v => (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toLocaleString(LOC(), {minimumFractionDigits: 2, maximumFractionDigits: 2}) + "R";
+  const res = t => t.rR != null ? fR(t.rR) : fmtPct(t.rPct, 1);
   const ymKey = t => { const d = new Date(t * 1000); return d.getUTCFullYear() + "-" + String(d.getUTCMonth() + 1).padStart(2, "0"); };
 
   function candleSVG(t, W, H, mini) {
@@ -955,11 +958,11 @@ function CatfishHistorico(root, dados) {
     $("catResTit").textContent = `${MES[+ABERTO.slice(5, 7) - 1]}/${ABERTO.slice(0, 4)} · ${fmtPct(r.pct, 1)} · ${r.n} ${tx("operações")}`;
     $("catResB").innerHTML = r.detail.map(t => `
       <div class="rm-mini ${t.rUsd > 0 ? "w" : "l"}" data-op="${t.op}">
-        <div class="t"><span><b>${t.ativo}</b></span><span class="num ${t.rPct >= 0 ? "pos" : "neg"}">${fmtPct(t.rPct, 1)}</span></div>
+        <div class="t"><span><b>${t.ativo}</b></span><span class="num ${t.rPct >= 0 ? "pos" : "neg"}">${res(t)}</span></div>
         ${candleSVG(t, 170, 80, true)}
       </div>`).join("");
     $("catResLista").innerHTML = `<tr><th style="text-align:left">${tx("Ativo")}</th><th class="n">${tx("Entrada")}</th><th class="n">${tx("Saída")}</th><th class="n">${tx("Resultado")}</th></tr>` +
-      r.detail.map(t => `<tr><td><b>${t.ativo}</b> <span class="mut" style="font-size:11px">${t.fase === "l" ? "Hyperliquid" : "Binance"}${t.mercado === "perp" ? (t.lado === "short" ? " · perp short" : " · perp long") : ""}</span></td><td class="n num mut">${dh(t.entrada)}</td><td class="n num mut">${dh(t.saida)}</td><td class="n num ${t.rPct >= 0 ? "pos" : "neg"}">${fmtPct(t.rPct, 1)}</td></tr>`).join("");
+      r.detail.map(t => `<tr><td><b>${t.ativo}</b> <span class="mut" style="font-size:11px">${t.fase === "l" ? "Hyperliquid" : "Binance"}${t.mercado === "perp" ? (t.lado === "short" ? " · perp short" : " · perp long") : ""}${t.rR == null ? " · " + tx("sem stop") : ""}</span></td><td class="n num mut">${dh(t.entrada)}</td><td class="n num mut">${dh(t.saida)}</td><td class="n num ${t.rPct >= 0 ? "pos" : "neg"}">${res(t)}${t.rR != null ? ` <span class="mut" style="font-size:11px">${fmtPct(t.rPct, 1)}</span>` : ""}</td></tr>`).join("");
   }
   $("meses").addEventListener("click", e => { const td = e.target.closest("td.m"); if (!td) return; ABERTO = ABERTO === td.dataset.mes ? null : td.dataset.mes; render(); if (ABERTO) $("catResMes").scrollIntoView({block: "nearest"}); });
   $("catResX").addEventListener("click", () => { ABERTO = null; render(); });
@@ -968,7 +971,7 @@ function CatfishHistorico(root, dados) {
     if (!card) { tip.style.display = "none"; return; }
     const t = TRADES.find(x => x.op === +card.dataset.op);
     if (!t) { tip.style.display = "none"; return; }
-    tip.innerHTML = `<b>${t.ativo}</b>${t.mercado === "perp" ? ` <span class="mut">perp ${t.lado}</span>` : ""}<br>${tx("entrada")} ${dh(t.entrada)} UTC · ${t.precoE}<br>${tx("saída")} ${dh(t.saida)} UTC · ${t.precoS}<br><span class="${t.rPct >= 0 ? "pos" : "neg"}">${fmtPct(t.rPct, 1)}</span>`;
+    tip.innerHTML = `<b>${t.ativo}</b>${t.mercado === "perp" ? ` <span class="mut">perp ${t.lado}</span>` : ""}<br>${tx("entrada")} ${dh(t.entrada)} UTC · ${t.precoE}<br>${tx("saída")} ${dh(t.saida)} UTC · ${t.precoS}${t.stop ? `<br>stop ${t.stop}` : ""}<br><span class="${t.rPct >= 0 ? "pos" : "neg"}">${res(t)}${t.rR != null ? " · " + fmtPct(t.rPct, 1) : ""}</span>`;
     const W = 270, vw = window.innerWidth, vh = window.innerHeight;
     let x = e.clientX + 14, y = e.clientY + 14;
     if (x + W > vw) x = e.clientX - W - 14;
