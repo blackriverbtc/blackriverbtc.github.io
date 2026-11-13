@@ -264,7 +264,8 @@ const deIso = s => Math.floor(Date.UTC(+s.slice(0, 4), +s.slice(5, 7) - 1, +s.sl
 let BTC = [], bDe = 0, bAte = 0, bScale = "log", bCiclosOn = true;
 $("bCiclos").addEventListener("change", () => { bCiclosOn = $("bCiclos").value === "halving"; renderB(); });
 const at = (S, t) => { let lo = 0, hi = S.length - 1, k = 0; while (lo <= hi) { const m = (lo + hi) >> 1; if (S[m][0] <= t) { k = m; lo = m + 1; } else hi = m - 1; } return S[k][1]; };
-const serie = (S, a, b, cap) => { const base = at(S, a); const pts = S.filter(p => p[0] >= a && p[0] <= b).map(p => [p[0], cap * p[1] / base]); return pts.length ? pts : [[a, cap], [b, cap]]; };
+// base = ponto do dia anterior (fim do dia a−1 = início do dia a)
+const serie = (S, a, b, cap) => { const base = at(S, a - DIA); const pts = S.filter(p => p[0] >= a - DIA && p[0] <= b).map(p => [Math.max(p[0], a), cap * p[1] / base]); return pts.length ? pts : [[a, cap], [b, cap]]; };
 const quedaMax = C => { let pk = 0, d = 0, t = null; C.forEach(([x, v]) => { if (v > pk) pk = v; const q = 1 - v / pk; if (q > d) { d = q; t = x; } }); return {dd: d * 100, t}; };
 // ---- Catfish como curva: índice (base 1) que encadeia o retorno % de cada operação, Binance + Hyperliquid, na
 // ordem em que fecharam — igual ao "Simular com" da aba Cat Fish. Usado só nas duas abas de comparação.
@@ -485,9 +486,10 @@ $("meses").addEventListener("click", e => { const td = e.target.closest("td.m");
 
 // preço "da cota": patrimônio simulado (base 10 mil) no último fechamento diário até t
 function P(t) { let lo = 0, hi = D.cT.length - 1, k = 0; while (lo <= hi) { const m = (lo + hi) >> 1; if (D.cT[m] <= t) { k = m; lo = m + 1; } else hi = m - 1; } return D.cV[k]; }
+const P0 = t => P(t - DIA);   // valor no INÍCIO do dia t: o ponto do dia d é o saldo no fim do dia (operações que fecham no dia d já entram nele)
 function inicio() { return AP.length ? AP[0].t : (modo === "dca" ? plano.ini : aportes[0].t); }
 function investido(t) { return AP.filter(a => a.t <= t).reduce((s, a) => s + a.v, 0); }
-function bal(valor, t) { return AP.filter(a => a.t <= t).reduce((s, a) => s + a.v * valor / P(a.t), 0); }   // saldo do investidor quando a cota vale `valor`
+function bal(valor, t) { return AP.filter(a => a.t <= t).reduce((s, a) => s + a.v * valor / P0(a.t), 0); }   // saldo do investidor quando a cota vale `valor`
 function visiveis() { const a = t0(), b = tF(); return D.T.filter(t => t.saida >= a && t.saida <= b); }
 function curvaVis(n, V) { const ini = t0(), tmax = n >= V.length ? tF() : (n ? V[n - 1].saida : ini); const i0 = D.cT.findIndex(t => t >= ini); return D.curva.slice(Math.max(0, i0 - 1)).filter(p => p[0] <= tmax).map(p => [Math.max(p[0], ini), p[1]]); }
 
@@ -495,12 +497,12 @@ function metricas(n, V) {
   const T = V.slice(0, n), C = curvaVis(n, V), ini = t0();
   const fimP = n >= V.length, tfim = fimP ? tF() : (n ? T[n - 1].saida : ini);
   const cota = n && !fimP ? T[n - 1].banca_apos : (C.length ? C[C.length - 1][1] : P(tfim));   // no fim do período: saldo realizado (igual ao gráfico); durante a reprodução: saldo após a operação
-  const eq = bal(cota, tfim), eq0 = bal(P(ini), ini);           // patrimônio no fim e no início do período
+  const eq = bal(cota, tfim), eq0 = bal(P0(ini), ini);           // patrimônio no fim e no início do período
   const inv = investido(tfim), invP = inv - investido(ini);     // aportes feitos dentro do período
   let pico = 0, dd = 0, ddT = null; C.forEach(([t, v]) => { if (v > pico) pico = v; const d = 1 - v / pico; if (d > dd) { dd = d; ddT = t; } });
   const R = T.map(t => t.R), W = R.filter(r => r > 0), L = R.filter(r => r <= 0);
   const dias = Math.max(1, (tfim - ini) / DIA);
-  const twr = cota / P(ini);
+  const twr = cota / P0(ini);
   const g = (Math.pow(twr, 1 / dias) - 1) * 100;
   return {eq, eq0, inv, invP, base: eq0 + invP, lucro: eq - eq0 - invP, twr: (twr - 1) * 100, dd: dd * 100, ddT, n, acerto: n ? W.length / n * 100 : 0, r: n ? R.reduce((a, b) => a + b, 0) / n : 0,
           ganho: W.length ? W.reduce((a, b) => a + b, 0) / W.length : 0, perda: L.length ? L.reduce((a, b) => a + b, 0) / L.length : 0,
@@ -605,7 +607,7 @@ function chart(V) {
 }
 
 function anos(V) {
-  const T = V.slice(0, idx), C = curvaVis(idx, V); const rows = []; let prevP = P(t0());
+  const T = V.slice(0, idx), C = curvaVis(idx, V); const rows = []; let prevP = P0(t0());
   for (let y = 2020; y <= 2026; y++) {
     const cy = C.filter(p => new Date(p[0] * 1000).getUTCFullYear() === y); if (!cy.length) continue;
     let pico = prevP, dd = 0; cy.forEach(([, v]) => { if (v > pico) pico = v; dd = Math.max(dd, 1 - v / pico); });
