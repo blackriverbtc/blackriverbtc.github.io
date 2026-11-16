@@ -251,7 +251,7 @@ input[type=checkbox]{accent-color:var(--acc);width:15px;height:15px}
     <input type="date" id="cAte"><button class="btn" id="cTudo">tudo</button>
   </div>
 </section>
-<p class="note" style="margin:8px 0 0">Mesmo aporte nos seis robôs, só operações fechadas. O Cat Fish só tem dados a partir de agosto de 2026; antes disso a linha dele fica parada no início. Clique no nome de um robô para mostrar ou esconder a linha dele.</p>
+<p class="note" style="margin:8px 0 0">Mesmo aporte nos seis robôs, só operações fechadas. Clique no nome de um robô para mostrar ou esconder a linha dele.</p>
 <h2>Comparação no período</h2>
 <div class="card tw"><table id="cTab"></table></div>
 <h2>Ano a ano</h2>
@@ -273,13 +273,18 @@ const at = (S, t) => { let lo = 0, hi = S.length - 1, k = 0; while (lo <= hi) { 
 // base = ponto do dia anterior (fim do dia a−1 = início do dia a)
 const serie = (S, a, b, cap) => { const base = at(S, a - DIA); const pts = S.filter(p => p[0] >= a - DIA && p[0] <= b).map(p => [Math.max(p[0], a), cap * p[1] / base]); return pts.length ? pts : [[a, cap], [b, cap]]; };
 const quedaMax = C => { let pk = 0, d = 0, t = null; C.forEach(([x, v]) => { if (v > pk) pk = v; const q = 1 - v / pk; if (q > d) { d = q; t = x; } }); return {dd: d * 100, t}; };
-// ---- Catfish como curva: índice (base 1) que encadeia o retorno % de cada operação, Binance + Hyperliquid, na
-// ordem em que fecharam — igual ao "Simular com" da aba Cat Fish. Usado só nas duas abas de comparação.
+// ---- Catfish como curva (16/11/2026, Felipe): até a 1ª operação real, o histórico ESTIMADO (catfish_estimado.json, modelo de mercado do
+// Estudo Cat Fish, % por dia); depois, cada operação real pelo lucro em US$ sobre o patrimônio da conta na hora (Binance: capital suposto
+// de 175 mil; Hyperliquid: 1.999,79), pelo dia de saída, como os outros robôs. Usado só nas duas abas de comparação.
 let CATFISH_CURVA = null, CATFISH_TRADES = [];
-function montarCatfishCurva(cat) {
+function montarCatfishCurva(cat, est) {
   const trades = (cat.trades || []).slice().sort((a, b) => a.saida - b.saida);
-  let idx = 1; const curva = [[trades.length ? trades[0].entrada : cat.atualizado, 1]];
-  trades.forEach(t => { idx *= 1 + t.rPct / 100; curva.push([t.saida, idx]); });
+  let idx = 1; const curva = [];
+  if (est && est.dias && est.dias.length) { curva.push([est.dias[0][0] - DIA, 1]); est.dias.forEach(([t, p]) => { idx *= 1 + p / 100; curva.push([t, idx]); }); }
+  else curva.push([trades.length ? trades[0].entrada : cat.atualizado, 1]);
+  const cap = {b: est ? est.capital_binance : 175000, l: est ? est.capital_hl : 1999.79}, lucro = {b: 0, l: 0};
+  trades.forEach(t => { const f = t.fase === "l" ? "l" : "b"; const pct = t.rUsd / (cap[f] + lucro[f]);
+    lucro[f] += t.rUsd; idx *= 1 + pct; curva.push([t.saida, idx]); });
   CATFISH_CURVA = curva; CATFISH_TRADES = trades;
 }
 // ---- Gráfico com N curvas (Evolução) + versão do mesmo eixo X em queda-desde-o-pico, reaproveitado pelas
@@ -786,7 +791,7 @@ en: {
   "Como ler estes números": "How to read these numbers", "Simulação, não resultado real.": "Simulation, not real results.",
   [NOTA_BAR]: "The curve applies the Barracuda bot rules (v28) to Binance spot prices from 11 May 2020 onward, already including the costs of trading on Hyperliquid. Equity counts closed trades only: an open position enters the result when it closes. The rules were chosen looking at this same period: future performance tends to be lower, and the drawdown to expect is 30–50%, not the historical one. The bot has traded real money since 27 Sep 2026; this page shows only the simulation.",
   "Aporte US$": "Deposit US$", "Evolução": "Evolution", "BTC comprado e segurado": "BTC bought and held", "Arraste as bolinhas (ou escolha as datas) para mudar o período; o aporte entra na data de início.": "Drag the handles (or pick the dates) to change the period; the deposit goes in on the start date.",
-  "O mesmo dinheiro, no mesmo período, sem aportes extras, em quatro curvas: Barracuda (simulação v28, custos da Hyperliquid), Arowana (v28 + breakeven), Cat Fish (histórico de operações, sem código próprio — ver a aba Cat Fish) e BTC à vista comprado e segurado (sem custos). O Cat Fish só tem dados a partir de agosto de 2026; antes disso a linha dele fica parada no início. As curvas do robô foram ajustadas olhando este mesmo período; a do BTC é preço.": "The same money, over the same period, with no extra deposits, in four curves: Barracuda (v28 simulation, Hyperliquid costs), Arowana (v28 + breakeven), Cat Fish (trade history, no code of its own — see the Cat Fish tab) and spot BTC bought and held (no costs). Cat Fish only has data from August 2026 on; before that its line stays flat at the start. The bot curves were tuned looking at this same period; the BTC curve is just price.",
+  "O mesmo dinheiro, no mesmo período, sem aportes extras, em quatro curvas: Barracuda (simulação v28, custos da Hyperliquid), Arowana (v28 + breakeven), Cat Fish (histórico de operações, sem código próprio — ver a aba Cat Fish) e BTC à vista comprado e segurado (sem custos). As curvas do robô foram ajustadas olhando este mesmo período; a do BTC é preço.": "The same money, over the same period, with no extra deposits, in four curves: Barracuda (v28 simulation, Hyperliquid costs), Arowana (v28 + breakeven), Cat Fish (trade history, no code of its own — see the Cat Fish tab) and spot BTC bought and held (no costs). Cat Fish only has data from August 2026 on; before that its line stays flat at the start. The bot curves were tuned looking at this same period; the BTC curve is just price.",
   "O Cat Fish só tem dados a partir de agosto de 2026 (histórico de operações, não simulação de patrimônio — ver a aba Cat Fish); antes disso a linha dele fica parada no início.": "Cat Fish only has data from August 2026 on (trade history, not an equity simulation — see the Cat Fish tab); before that its line stays flat at the start.",
   "Barracuda, Arowana, Cat Fish e BTC no período": "Barracuda, Arowana, Cat Fish and BTC in the period", "Barracuda, Arowana e Cat Fish no período": "Barracuda, Arowana and Cat Fish in the period",
   "Quando a operação anda o gatilho a favor (máxima ou mínima do candle), o stop vai para a entrada + 0,3R a partir do candle seguinte. O stop móvel pela onda continua igual. Simulação das duas regras no mesmo período.": "Once a trade moves the trigger distance in its favor (candle high or low), the stop goes to entry + 0.3R from the next candle on. The wave trailing stop stays the same. Simulation of both rules over the same period.",
@@ -817,7 +822,7 @@ es: {
   "Como ler estes números": "Cómo leer estos números", "Simulação, não resultado real.": "Simulación, no resultado real.",
   [NOTA_BAR]: "La curva aplica las reglas del robot Barracuda (v28) a precios spot de Binance desde el 11/05/2020, ya con los costos de operar en Hyperliquid incluidos. El patrimonio cuenta solo operaciones cerradas: una posición abierta entra en el resultado cuando se cierra. Las reglas se eligieron mirando este mismo período: el desempeño futuro tiende a ser menor, y la caída a esperar es de 30–50%, no la histórica. El robot opera dinero real desde el 27/09/2026; esta página muestra solo lo simulado.",
   "Aporte US$": "Aporte US$", "Evolução": "Evolución", "BTC comprado e segurado": "BTC comprado y mantenido", "Arraste as bolinhas (ou escolha as datas) para mudar o período; o aporte entra na data de início.": "Arrastre los controles (o elija las fechas) para cambiar el período; el aporte entra en la fecha de inicio.",
-  "O mesmo dinheiro, no mesmo período, sem aportes extras, em quatro curvas: Barracuda (simulação v28, custos da Hyperliquid), Arowana (v28 + breakeven), Cat Fish (histórico de operações, sem código próprio — ver a aba Cat Fish) e BTC à vista comprado e segurado (sem custos). O Cat Fish só tem dados a partir de agosto de 2026; antes disso a linha dele fica parada no início. As curvas do robô foram ajustadas olhando este mesmo período; a do BTC é preço.": "El mismo dinero, en el mismo período, sin aportes extra, en cuatro curvas: Barracuda (simulación v28, costos de Hyperliquid), Arowana (v28 + breakeven), Cat Fish (historial de operaciones, sin código propio — ver la pestaña Cat Fish) y BTC spot comprado y mantenido (sin costos). Cat Fish solo tiene datos desde agosto de 2026; antes de eso su línea queda plana al inicio. Las curvas del robot se ajustaron mirando este mismo período; la del BTC es precio.",
+  "O mesmo dinheiro, no mesmo período, sem aportes extras, em quatro curvas: Barracuda (simulação v28, custos da Hyperliquid), Arowana (v28 + breakeven), Cat Fish (histórico de operações, sem código próprio — ver a aba Cat Fish) e BTC à vista comprado e segurado (sem custos). As curvas do robô foram ajustadas olhando este mesmo período; a do BTC é preço.": "El mismo dinero, en el mismo período, sin aportes extra, en cuatro curvas: Barracuda (simulación v28, costos de Hyperliquid), Arowana (v28 + breakeven), Cat Fish (historial de operaciones, sin código propio — ver la pestaña Cat Fish) y BTC spot comprado y mantenido (sin costos). Cat Fish solo tiene datos desde agosto de 2026; antes de eso su línea queda plana al inicio. Las curvas del robot se ajustaron mirando este mismo período; la del BTC es precio.",
   "O Cat Fish só tem dados a partir de agosto de 2026 (histórico de operações, não simulação de patrimônio — ver a aba Cat Fish); antes disso a linha dele fica parada no início.": "Cat Fish solo tiene datos desde agosto de 2026 (historial de operaciones, no una simulación de patrimonio — ver la pestaña Cat Fish); antes de eso su línea queda plana al inicio.",
   "Barracuda, Arowana, Cat Fish e BTC no período": "Barracuda, Arowana, Cat Fish y BTC en el período", "Barracuda, Arowana e Cat Fish no período": "Barracuda, Arowana y Cat Fish en el período",
   "Quando a operação anda o gatilho a favor (máxima ou mínima do candle), o stop vai para a entrada + 0,3R a partir do candle seguinte. O stop móvel pela onda continua igual. Simulação das duas regras no mesmo período.": "Cuando la operación avanza el gatillo a favor (máximo o mínimo de la vela), el stop pasa a la entrada + 0,3R a partir de la vela siguiente. El stop móvil por la onda sigue igual. Simulación de las dos reglas en el mismo período.",
@@ -830,8 +835,8 @@ TR.es[NOTA_BAR.replace("regras do robô Barracuda (v28)", PIR_PT)] = TR.es[NOTA_
 TR.en[NOTA_PAR] = "Aggressive bot simulation: the same trades as Pirarucu with risk ×1.9, two-step pyramiding (+50% on a close at 2R and another +50% on a close at 4R), longs in the first 5 candles of a trend with risk ×1.5 and shorts at half weight. Site basis: Binance spot prices and closed trades only, which is more favourable than perpetuals with real funding (there, about +280% a year with a 60% drawdown; pessimistic +220% with 68%). The bot does not exist yet: this is a study.";
 TR.es[NOTA_PAR] = "Simulación del robot agresivo: las mismas operaciones de Pirarucu con riesgo ×1,9, pirámide en dos escalones (+50% al cerrar con 2R y otro +50% al cerrar con 4R), compra en las 5 primeras velas de la tendencia con riesgo ×1,5 y venta con la mitad del peso. Base del sitio: precios spot de Binance y solo operaciones cerradas, más favorable que la cuenta con perpetuos y funding real (allí, cerca de +280% al año con caída del 60%; pesimista +220% con caída del 68%). El robot todavía no existe: es un estudio.";
 MES = MESES[LANG];
-Object.assign(TR.en, {"aumento de mão": "position add", "Histórico Black River": "Black River Track Record", "claro": "light", "escuro": "dark", "Patrimônio simulado ao longo do tempo": "Simulated equity over time", "início do período": "period start", "fim do período": "period end", "Robô e BTC no período": "Bot and BTC in the period", "Barracuda e Arowana no período": "Barracuda and Arowana in the period", "6 Robôs": "6 Bots", "Robôs x BTC": "Bots x BTC", "Mesmo aporte nos seis robôs, só operações fechadas. O Cat Fish só tem dados a partir de agosto de 2026; antes disso a linha dele fica parada no início. Clique no nome de um robô para mostrar ou esconder a linha dele.": "Same deposit in all six bots, closed trades only. Cat Fish only has data from August 2026; before that its line stays flat at the start. Click a bot's name to show or hide its line.", "· faixas = ciclos do halving do BTC": "· bands = BTC halving cycles", "Resultados": "Results", "Carregando…": "Loading…", "operações": "trades", "Sem candles para este mês.": "No candles for this month.", "saída": "exit", "fechar": "close", "sem stop": "no stop"});
-Object.assign(TR.es, {"aumento de mão": "aumento de posición", "Histórico Black River": "Historial Black River", "claro": "claro", "escuro": "oscuro", "Patrimônio simulado ao longo do tempo": "Patrimonio simulado a lo largo del tiempo", "início do período": "inicio del período", "fim do período": "fin del período", "Robô e BTC no período": "Robot y BTC en el período", "Barracuda e Arowana no período": "Barracuda y Arowana en el período", "6 Robôs": "6 Robots", "Robôs x BTC": "Robots x BTC", "Mesmo aporte nos seis robôs, só operações fechadas. O Cat Fish só tem dados a partir de agosto de 2026; antes disso a linha dele fica parada no início. Clique no nome de um robô para mostrar ou esconder a linha dele.": "Mismo aporte en los seis robots, solo operaciones cerradas. Cat Fish solo tiene datos desde agosto de 2026; antes su línea queda plana al inicio. Haga clic en el nombre de un robot para mostrar u ocultar su línea.", "· faixas = ciclos do halving do BTC": "· franjas = ciclos del halving de BTC", "Resultados": "Resultados", "Carregando…": "Cargando…", "operações": "operaciones", "Sem candles para este mês.": "Sin velas para este mes.", "saída": "salida", "fechar": "cerrar", "sem stop": "sin stop"});
+Object.assign(TR.en, {"estimativa": "estimate", "· resultado em % de cada mês · clique num mês para analisá-lo": "· result in % of each month · click a month to analyze it", "aumento de mão": "position add", "Histórico Black River": "Black River Track Record", "claro": "light", "escuro": "dark", "Patrimônio simulado ao longo do tempo": "Simulated equity over time", "início do período": "period start", "fim do período": "period end", "Robô e BTC no período": "Bot and BTC in the period", "Barracuda e Arowana no período": "Barracuda and Arowana in the period", "6 Robôs": "6 Bots", "Robôs x BTC": "Bots x BTC", "Mesmo aporte nos seis robôs, só operações fechadas. Clique no nome de um robô para mostrar ou esconder a linha dele.": "Same deposit in all six bots, closed trades only. Click a bot's name to show or hide its line.", "· faixas = ciclos do halving do BTC": "· bands = BTC halving cycles", "Resultados": "Results", "Carregando…": "Loading…", "operações": "trades", "Sem candles para este mês.": "No candles for this month.", "saída": "exit", "fechar": "close", "sem stop": "no stop"});
+Object.assign(TR.es, {"estimativa": "estimación", "· resultado em % de cada mês · clique num mês para analisá-lo": "· resultado en % de cada mes · haga clic en un mes para analizarlo", "aumento de posición": "aumento de posición", "aumento de mão": "aumento de posición", "Histórico Black River": "Historial Black River", "claro": "claro", "escuro": "oscuro", "Patrimônio simulado ao longo do tempo": "Patrimonio simulado a lo largo del tiempo", "início do período": "inicio del período", "fim do período": "fin del período", "Robô e BTC no período": "Robot y BTC en el período", "Barracuda e Arowana no período": "Barracuda y Arowana en el período", "6 Robôs": "6 Robots", "Robôs x BTC": "Robots x BTC", "Mesmo aporte nos seis robôs, só operações fechadas. Clique no nome de um robô para mostrar ou esconder a linha dele.": "Mismo aporte en los seis robots, solo operaciones cerradas. Haga clic en el nombre de un robot para mostrar u ocultar su línea.", "· faixas = ciclos do halving do BTC": "· franjas = ciclos del halving de BTC", "Resultados": "Resultados", "Carregando…": "Cargando…", "operações": "operaciones", "Sem candles para este mês.": "Sin velas para este mes.", "saída": "salida", "fechar": "cerrar", "sem stop": "sin stop"});
 const tx = s => LANG === "pt" ? s : (TR[LANG][s] ?? s);
 const TX = (strs, ...vals) => tx(strs.reduce((acc, p, i) => acc + (i ? `{${i - 1}}` : "") + p, "")).replace(/\{(\d+)\}/g, (_, k) => vals[+k]);
 const MODS = [];
@@ -896,23 +901,17 @@ function CatfishHistorico(root, dados) {
     return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${t.ativo}">${g}</svg>`;
   }
 
-  function computar() {
-    const cap = +$("catCap").value || 1000;
-    const dIni = deIso($("catDIni").value) || DMIN;
-    const lista = TRADES.filter(t => t.saida >= dIni);
-    let equity = cap, pico = cap, dd = 0, ddT = null;
-    const pts = [[dIni, cap]];
-    const rows = [];
-    let mesAtual = null, bucket = [];
-    const fechaMes = () => {
-      if (!bucket.length) return;
-      const equityIni = equity;
-      bucket.forEach(t => { equity *= 1 + t.rPct / 100; pts.push([t.saida, equity]); if (equity > pico) pico = equity; const d = 1 - equity / pico; if (d > dd) { dd = d; ddT = t.saida; } });
-      const pnl = equity - equityIni;
-      rows.push({mes: mesAtual, n: bucket.length, pnl, pct: equityIni ? pnl / equityIni * 100 : 0, detail: bucket.slice()});
-    };
-    lista.forEach(t => { const m = ymKey(t.saida); if (mesAtual === null) mesAtual = m; if (m !== mesAtual) { fechaMes(); bucket = []; mesAtual = m; } bucket.push(t); });
-    fechaMes();
+  // 16/11/2026: a aba segue a mesma curva das comparações (CATFISH_CURVA): estimativa até 04/08/2026 + operações reais pesadas pelo capital.
+  // Meses antes da 1ª operação real são estimativa (sem operações para abrir).
+  function computar(desdeInicio) {   // desdeInicio: a tabela mês a mês mostra sempre o histórico inteiro, como nas outras abas
+    const cap = +$("catCap").value || 1000, CV = CATFISH_CURVA && CATFISH_CURVA.length ? CATFISH_CURVA : [[DMIN, 1]];
+    const dIni = desdeInicio ? CV[0][0] : deIso($("catDIni").value) || CV[0][0], base = at(CV, dIni), mReal = ymKey(DMIN);
+    const pts = [[dIni, cap]]; CV.forEach(([t, v]) => { if (t > dIni) pts.push([t, cap * v / base]); });
+    let pico = cap, dd = 0, ddT = null; pts.forEach(([t, v]) => { if (v > pico) pico = v; const d = 1 - v / pico; if (d > dd) { dd = d; ddT = t; } });
+    const fimMes = {}; pts.forEach(([t, v]) => { fimMes[ymKey(t)] = v; });
+    const rows = []; let prev = cap;
+    Object.keys(fimMes).sort().forEach(k => { const det = TRADES.filter(t => t.saida >= dIni && ymKey(t.saida) === k);
+      rows.push({mes: k, n: det.length, pnl: fimMes[k] - prev, pct: (fimMes[k] / prev - 1) * 100, detail: det, est: k < mReal}); prev = fimMes[k]; });
     return {rows, cap, dd: dd * 100, ddT, pts};
   }
 
@@ -938,7 +937,7 @@ function CatfishHistorico(root, dados) {
       <div class="tile"><div class="k">${tx("Operações")}</div><div class="v num">${todasOps.length}</div><div class="s">${tx("acerto")} ${winRate.toLocaleString(LOC(), {maximumFractionDigits: 1})}% · ${tx("média")} ${fmtPct(avgR, 1)} · PF ${isFinite(pf) ? pf.toFixed(2) : "∞"}</div></div>
     `;
     renderChart(pts, cap);
-    renderGrid(rows);
+    renderGrid(computar(true).rows);
     renderDet(rows);
   }
 
@@ -948,7 +947,7 @@ function CatfishHistorico(root, dados) {
     if (pts.length < 2) { svg.innerHTML = `<div class="empty">${tx("Sem operações neste período.")}</div>`; return; }
     const vals = pts.map(p => p[1]);
     const minV = Math.min(...vals), maxV = Math.max(...vals, minV + 1);
-    const X = i => L + (W - L - R) * (pts.length === 1 ? 1 : i / (pts.length - 1));
+    const t0 = pts[0][0], t1 = pts[pts.length - 1][0], X = i => L + (W - L - R) * ((pts[i][0] - t0) / (t1 - t0 || 1));
     const Y = v => T + (H - T - B) * (1 - (v - minV) / (maxV - minV));
     const line = pts.map((p, i) => `${i ? "L" : "M"}${X(i).toFixed(1)},${Y(p[1]).toFixed(1)}`).join(" ");
     const area = line + ` L${X(pts.length - 1).toFixed(1)},${Y(minV).toFixed(1)} L${X(0).toFixed(1)},${Y(minV).toFixed(1)} Z`;
@@ -972,7 +971,8 @@ function CatfishHistorico(root, dados) {
         const key = y + "-" + String(m).padStart(2, "0"), r = byMes[key];
         if (!r) { cells += `<td><span class="c mut">·</span></td>`; continue; }
         tem = true; pctAno *= 1 + r.pct / 100;
-        cells += `<td class="m" data-mes="${key}" style="${cor(r.pct)}" title="${MES[m - 1]}/${y}: ${fmtPct(r.pct, 1)}"><span class="c">${fmtPct(r.pct, 0)}</span></td>`;
+        cells += r.est ? `<td style="${cor(r.pct)}" title="${MES[m - 1]}/${y}: ${fmtPct(r.pct, 1)}"><span class="c">${fmtPct(r.pct, 0)}</span></td>`
+                       : `<td class="m" data-mes="${key}" style="${cor(r.pct)}" title="${MES[m - 1]}/${y}: ${fmtPct(r.pct, 1)}"><span class="c">${fmtPct(r.pct, 0)}</span></td>`;
       }
       h += `<tr><td class="y">${y}</td>${cells}<td class="tot" style="${tem ? cor((pctAno - 1) * 100) : ""}"><span class="c">${tem ? fmtPct((pctAno - 1) * 100, 0) : "·"}</span></td></tr>`;
     });
@@ -982,7 +982,7 @@ function CatfishHistorico(root, dados) {
   function renderDet(rows) {
     const sec = $("catResMes");
     if (!ABERTO) { sec.hidden = true; return; }
-    const r = rows.find(x => x.mes === ABERTO);
+    const r = computar(true).rows.find(x => x.mes === ABERTO);
     if (!r) { sec.hidden = true; return; }
     sec.hidden = false;
     $("catResTit").textContent = `${MES[+ABERTO.slice(5, 7) - 1]}/${ABERTO.slice(0, 4)} · ${fmtPct(r.pct, 1)} · ${r.n} ${tx("operações")}`;
@@ -1013,7 +1013,7 @@ function CatfishHistorico(root, dados) {
   function init() {
     if (!TRADES.length) { root.innerHTML = `<div class="empty">${tx("Sem operações ainda.")}</div>`; return; }
     DMIN = TRADES[0].entrada; DMAX = TRADES[TRADES.length - 1].saida;
-    $("catDIni").min = iso(DMIN); $("catDIni").max = iso(DMAX); $("catDIni").value = iso(Math.max(DMIN, anoAtualIni()));
+    $("catDIni").min = iso(CATFISH_CURVA && CATFISH_CURVA.length ? CATFISH_CURVA[0][0] : DMIN); $("catDIni").max = iso(DMAX); $("catDIni").value = iso(Math.max(CATFISH_CURVA && CATFISH_CURVA.length ? CATFISH_CURVA[0][0] : DMIN, anoAtualIni()));
     $("catCap").addEventListener("input", render);
     $("catDIni").addEventListener("change", render);
     render();
@@ -1039,7 +1039,9 @@ async function main() {
   await leva("pir", "tab-pir", "dash_pir.json", J => J);
   await leva("pra", "tab-pra", "dash_piranha.json", J => Object.assign(J, {pasta_meses: "meses_pir"}));
   await leva("can", "tab-pirpar", "dash_candiru.json", J => J);
-  try { const C_ = await (await fetch("dash_catfish.json", {cache: "no-store"})).json(); montarCatfishCurva(C_); MODS.push(CatfishHistorico($("tab-catfish"), C_)); MODS[MODS.length - 1].init();
+  try { const C_ = await (await fetch("dash_catfish.json", {cache: "no-store"})).json();
+    let E_ = null; try { E_ = await (await fetch("catfish_estimado.json", {cache: "no-store"})).json(); } catch (e2) {}
+    montarCatfishCurva(C_, E_); MODS.push(CatfishHistorico($("tab-catfish"), C_)); MODS[MODS.length - 1].init();
     MOD.find(m => m.k === "cat").d = {curva: CATFISH_CURVA, T: CATFISH_TRADES, inicio: 0}; }   // inicio 0: não encurta o período comum das comparações
   catch (e) { $("tab-catfish").innerHTML = '<div class="empty">Não consegui carregar o histórico do Cat Fish.</div>'; }
   traduzDOM();
